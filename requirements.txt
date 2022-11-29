@@ -1,0 +1,4 @@
+prometheus-client
+confuse
+asyncio
+juju == 2.9.11
