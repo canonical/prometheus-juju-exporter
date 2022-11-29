@@ -1,0 +1,13 @@
+customer:
+  name: "example_customer"
+  cloud_name: "example_cloud"
+
+juju:
+  controller_endpoint: "192.168.1.100:17070" # e.g. 192.168.1.100:17070
+  controller_cacert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n"
+  username: "example_user"
+  password: "example_password"
+
+exporter:
+  port: 9748
+  collect_interval: 15
