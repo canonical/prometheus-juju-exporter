@@ -33,3 +33,10 @@ skip_glob = '''
     | report
 )/
 '''
+
+[tool.coverage.run]
+relative_files = true
+omit = ["tests/**", "docs/**", "contrib/**", "snap/**", "setup.py"]
+
+[tool.coverage.xml]
+output = "coverage.xml"

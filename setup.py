@@ -10,8 +10,7 @@ with open("LICENSE") as f:
 
 setup(
     name="prometheus_juju_exporter",
-    # use_scm_version={"local_scheme": "node-and-date"},
-    version="1.0",
+    use_scm_version={"local_scheme": "node-and-date"},
     description="collects and exports juju machine status metrics",
     long_description=readme,
     author="Canonical BootStack DevOps Centres",
@@ -24,5 +23,5 @@ setup(
             "prometheus-juju-exporter=prometheus_juju_exporter.cli:main",
         ]
     },
-    # setup_requires=["setuptools_scm"],
+    setup_requires=["setuptools_scm"],
 )
