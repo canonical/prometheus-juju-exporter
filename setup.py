@@ -1,4 +1,4 @@
-"""Set up cloudstats python module cli scripts."""
+"""Set up prometheus_juju_exporter python module cli scripts."""
 
 from setuptools import setup
 
