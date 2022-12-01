@@ -29,14 +29,14 @@ lint:
 
 unittests:
 	@echo "Running unit tests"
-	@tox -e unit
+	@tox -e unit -- ${UNIT_ARGS}
 
 test: lint unittests functional
 	@echo "Tests completed for the snap."
 
 reformat:
 	@echo "Reformat files with black and isort"
-	tox -e reformat
+	@tox -e reformat
 
 build:
 	@echo "Building the snap"
