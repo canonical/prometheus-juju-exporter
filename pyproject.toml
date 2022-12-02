@@ -49,3 +49,16 @@ addopts = '''
 [tool.coverage.run]
 relative_files = true
 omit = ["tests/**", "docs/**", "contrib/**", "snap/**", "setup.py"]
+
+[tool.isort]
+profile = "black"
+skip_glob = '''
+/(
+    | .eggs
+    | .git
+    | .tox
+    | .venv
+    | .build
+    | report
+)/
+'''
