@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 """Test exporter daemon."""
-import asyncio
 import unittest.mock as mock
 
 import pytest
@@ -22,6 +21,10 @@ class TestExporterDaemon:
     def test_parse_config(self, exporter_daemon):
         """Test config parsing."""
         statsd = exporter_daemon()
+
+        assert isinstance(statsd.config["exporter"]["port"].get(), int)
+        assert isinstance(statsd.config["exporter"]["collect_interval"].get(), int)
+
         assert statsd.config["exporter"]["port"].get() == 9748
         assert statsd.config["exporter"]["collect_interval"].get() == 15
 
@@ -29,14 +32,9 @@ class TestExporterDaemon:
     async def test_trigger(self, exporter_daemon):
         """Test trigger function."""
         statsd = exporter_daemon()
-        await statsd.trigger(test=True)
+        await statsd.trigger(once=True)
 
-        statsd.logger.info.assert_called_with(
-            "Gauges collected and ready for exporting."
-        )
-        asyncio.sleep.assert_called_once_with(
-            statsd.config["exporter"]["collect_interval"].get() * 60
-        )
+        statsd.collector.get_stats.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_trigger_exception(self, exporter_daemon):
@@ -47,16 +45,11 @@ class TestExporterDaemon:
             "prometheus_juju_exporter.collector.CollectorDaemon.get_stats",
             side_effect=Exception("mocked error"),
         ):
-            with pytest.raises(SystemExit) as e:
-                await statsd.trigger(test=True)
-
-            assert e.type == SystemExit
-            assert e.value.code == 1
-            statsd.logger.info.assert_called_with(
-                "Collection job resulted in error: mocked error"
-            )
+            with mock.patch("prometheus_juju_exporter.exporter.exit") as exit_call:
+                await statsd.trigger(once=True)
+                exit_call.assert_called_once()
 
     def test_run(self, exporter_daemon):
         """Test run function."""
         statsd = exporter_daemon()
-        statsd.run(test=True)
+        statsd.run(once=True)

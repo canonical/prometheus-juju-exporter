@@ -2,8 +2,8 @@
 """Pytest fixture definitions."""
 
 import os
+import unittest.mock as mock
 
-import mock
 import pytest
 
 os.environ["PROMETHEUSJUJUEXPORTERDIR"] = os.path.dirname(os.path.abspath(__file__))

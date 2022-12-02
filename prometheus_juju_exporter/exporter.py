@@ -13,15 +13,11 @@ class ExporterDaemon:
     def __init__(self, debug=False):
         """Create new daemon and configure runtime environment."""
         self.config = Config().get_config()
-        self.logger = self.setup_logging(debug=debug)
-        self.logger.info("Parsed config: {}".format(self.config.config_dir()))
+        self.logger = get_logger(debug=debug)
+        self.logger.info("Parsed config: %s", self.config.config_dir())
         self._registry = CollectorRegistry()
         self.collector = CollectorDaemon(self._registry, debug=debug)
         self.logger.debug("Exporter initialized")
-
-    def setup_logging(self, debug):
-        """Return the correct Logging instance based on debug option."""
-        return get_logger(debug=debug)
 
     async def trigger(self, **kwargs):
         """Configure prometheus_client gauges from generated stats."""
@@ -36,18 +32,19 @@ class ExporterDaemon:
                     self.config["exporter"]["collect_interval"].get(int) * 60
                 )
             except Exception as e:
-                self.logger.info(f"Collection job resulted in error: {e}")
+                self.logger.error("Collection job resulted in error: %s", e)
                 exit(1)
 
             # run collector only once if in test mode
-            if "test" in kwargs and kwargs["test"] is True:
+            if kwargs.get("once"):
                 run_collector = False
 
     def run(self, **kwargs):
         """Run exporter."""
         self.logger.debug("Running prometheus client http server.")
         start_http_server(
-            self.config["exporter"]["port"].get(), registry=self._registry
+            self.config["exporter"]["port"].get(int),
+            registry=self._registry,
         )
 
         loop = asyncio.get_event_loop()
