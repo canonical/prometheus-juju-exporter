@@ -2,6 +2,6 @@ prometheus-client
 confuse
 asyncio
 
-# Pinging the last release that was
+# Pinning the last release that was
 # natively designed for Juju 2.9
 juju == 2.9.11
