@@ -1,14 +1,14 @@
 name: SonarCloud
 on:
   workflow_run:
-    workflows: [Build]
+    workflows: [CI Setup]
     types: [completed]
 
 jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: echo event
         run: cat $GITHUB_EVENT_PATH
