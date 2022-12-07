@@ -1,4 +1,4 @@
-name: SonarCloud
+name: CI Setup
 on:
   push:
     branches:
@@ -6,8 +6,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  citest:
+    name: CI Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,8 +21,10 @@ jobs:
         run: pip install tox
       - name: Run tox
         run: make unittests
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Save PR number to file
+        run: echo ${{ github.event.number }} > PR_NUMBER.txt
+      - name: Archive PR number
+        uses: actions/upload-artifact@v3
+        with:
+          name: PR_NUMBER
+          path: PR_NUMBER.txt
