@@ -35,6 +35,7 @@ class TestExporterDaemon:
         await statsd.trigger(once=True)
 
         statsd.collector.get_stats.assert_called_once()
+        assert "example_gauge" in statsd.metrics.keys()
 
     @pytest.mark.asyncio
     async def test_trigger_exception(self, exporter_daemon):
@@ -53,3 +54,4 @@ class TestExporterDaemon:
         """Test run function."""
         statsd = exporter_daemon()
         statsd.run(once=True)
+        statsd.collector.get_stats.assert_called_once()

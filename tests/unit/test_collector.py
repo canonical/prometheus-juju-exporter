@@ -39,6 +39,7 @@ class TestCollectorDaemon:
                 "cloud_name": "example_cloud",
                 "juju_model": "test",
                 "type": "kvm",
+                "value": 1,
             },
             "juju-000ddd-0-lxd-0": {
                 "job": "prometheus-juju-exporter",
@@ -47,6 +48,7 @@ class TestCollectorDaemon:
                 "cloud_name": "example_cloud",
                 "juju_model": "test",
                 "type": "lxd",
+                "value": 1,
             },
         }
 
@@ -54,7 +56,7 @@ class TestCollectorDaemon:
         """Test _create_gauge_label function."""
         statsd = collector_daemon()
 
-        labels = statsd._create_gauge_label("host", "model", "machine")
+        labels = statsd._create_gauge_label("host", "model", "machine", 0)
 
         assert labels == {
             "job": "prometheus-juju-exporter",
@@ -63,6 +65,7 @@ class TestCollectorDaemon:
             "cloud_name": statsd.config["customer"]["cloud_name"].get(str),
             "juju_model": "model",
             "type": "machine",
+            "value": 0,
         }
 
     def test_get_gauge_value(self, collector_daemon):
@@ -76,47 +79,52 @@ class TestCollectorDaemon:
         assert down_status == 0
 
     @pytest.mark.asyncio
-    async def test_remove_stale_lables(self, collector_daemon):
+    async def test_get_labels_to_remove(self, collector_daemon):
         """Test _remove_stale_lables function."""
         statsd = collector_daemon()
 
         statsd.currently_cached_labels = {
-            "host1": {
+            "juju-000ddd-test-0": {
                 "job": "prometheus-juju-exporter",
-                "hostname": "host1",
-                "customer": statsd.config["customer"]["name"].get(str),
-                "cloud_name": statsd.config["customer"]["cloud_name"].get(str),
-                "juju_model": "model",
-                "type": "machine",
-            }
-        }
-        statsd.previously_cached_labels = {
-            "host1": {
-                "job": "prometheus-juju-exporter",
-                "hostname": "host1",
-                "customer": statsd.config["customer"]["name"].get(str),
-                "cloud_name": statsd.config["customer"]["cloud_name"].get(str),
-                "juju_model": "model",
-                "type": "machine",
+                "hostname": "juju-000ddd-test-0",
+                "customer": "example_customer",
+                "cloud_name": "example_cloud",
+                "juju_model": "test",
+                "type": "kvm",
+                "value": 1,
             },
-            "host2": {
+            "juju-000ddd-0-lxd-0": {
                 "job": "prometheus-juju-exporter",
-                "hostname": "host2",
-                "customer": statsd.config["customer"]["name"].get(str),
-                "cloud_name": statsd.config["customer"]["cloud_name"].get(str),
-                "juju_model": "model",
-                "type": "machine",
+                "hostname": "juju-000ddd-0-lxd-0",
+                "customer": "example_customer",
+                "cloud_name": "example_cloud",
+                "juju_model": "test",
+                "type": "lxd",
+                "value": 1,
+            },
+            "juju-000ddd-0-lxd-1": {
+                "job": "prometheus-juju-exporter",
+                "hostname": "juju-000ddd-0-lxd-1",
+                "customer": "example_customer",
+                "cloud_name": "example_cloud",
+                "juju_model": "test",
+                "type": "lxd",
+                "value": 1,
             },
         }
 
         await statsd.get_stats()
-        statsd.logger.debug.assert_called_with(
-            "Deleting timeseries "
-            "{'job': 'prometheus-juju-exporter', 'hostname': 'host1', "
-            "'customer': 'example_customer', 'cloud_name': 'example_cloud', "
-            "'juju_model': 'model', 'type': 'machine'} for removed machine "
-            "host1..."
-        )
+        assert statsd.data["juju_machine_state"]["labelvalues_remove"] == [
+            [
+                "prometheus-juju-exporter",
+                "juju-000ddd-0-lxd-1",
+                "example_customer",
+                "example_cloud",
+                "test",
+                "lxd",
+                1,
+            ]
+        ]
 
     @pytest.mark.asyncio
     async def test_get_models(self, collector_daemon):
@@ -137,6 +145,24 @@ class TestCollectorDaemon:
         }
 
     @pytest.mark.asyncio
+    async def test_connect_controller(self, collector_daemon):
+        """Test _connect_controller function."""
+        statsd = collector_daemon()
+        await statsd._connect_controller(
+            endpoint=statsd.config["juju"]["controller_endpoint"].get(),
+            username=statsd.config["juju"]["username"].get(),
+            password=statsd.config["juju"]["password"].get(),
+            cacert=statsd.config["juju"]["controller_cacert"].get(),
+        )
+
+        statsd.controller.connect.assert_called_once_with(
+            endpoint=statsd.config["juju"]["controller_endpoint"].get(),
+            username=statsd.config["juju"]["username"].get(),
+            password=statsd.config["juju"]["password"].get(),
+            cacert=statsd.config["juju"]["controller_cacert"].get(),
+        )
+
+    @pytest.mark.asyncio
     async def test_connect_model(self, collector_daemon):
         """Test _connect_model function."""
         statsd = collector_daemon()
@@ -148,9 +174,10 @@ class TestCollectorDaemon:
             cacert=statsd.config["juju"]["controller_cacert"].get(),
         )
 
-    @pytest.mark.asyncio
-    async def test_get_machine_stats_no_machines(self, collector_daemon):
-        """Test _get_machine_stats function with empty machines dict."""
-        statsd = collector_daemon()
-
-        await statsd._get_machine_stats({}, "model", "gauge")
+        statsd.model.connect.assert_called_once_with(
+            uuid="68c4cc81-9b3d-44a2-a419-d25dfb9d5588",
+            endpoint=statsd.config["juju"]["controller_endpoint"].get(),
+            username=statsd.config["juju"]["username"].get(),
+            password=statsd.config["juju"]["password"].get(),
+            cacert=statsd.config["juju"]["controller_cacert"].get(),
+        )

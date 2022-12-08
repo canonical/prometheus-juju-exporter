@@ -25,7 +25,7 @@ def get_model_list_data():
     return mock_model_list
 
 
-def get_stats_data():
+def get_juju_stats_data():
     """Mock model.get_status."""
     mock_stats = mock.AsyncMock()
 
@@ -158,6 +158,53 @@ def get_stats_data():
     return mock_stats
 
 
+def collected_stats_data():
+    return {
+        "example_gauge": {
+            "gauge_desc": "This is an example gauge",
+            "labels": [
+                "job",
+                "hostname",
+                "customer",
+                "cloud_name",
+                "juju_model",
+                "type",
+            ],
+            "labelvalues_update": [
+                {
+                    "job": "prometheus-juju-exporter",
+                    "hostname": "hostname1",
+                    "customer": "customer1",
+                    "cloud_name": "cloud name",
+                    "juju_model": "juju model",
+                    "type": "machine type",
+                    "value": 0,
+                },
+                {
+                    "job": "prometheus-juju-exporter",
+                    "hostname": "hostname2",
+                    "customer": "customer2",
+                    "cloud_name": "cloud name",
+                    "juju_model": "juju model",
+                    "type": "machine type",
+                    "value": 0,
+                },
+            ],
+            "labelvalues_remove": [
+                [
+                    "prometheus-juju-exporter",
+                    "hostname3",
+                    "customer3",
+                    "cloud name",
+                    "juju model",
+                    "machine type",
+                    0,
+                ]
+            ],
+        }
+    }
+
+
 @pytest.fixture
 def config_instance(monkeypatch):
     """Mock config."""
@@ -205,7 +252,7 @@ def mock_model_connection(monkeypatch):
     mock_model.connect = mock_connection
     mock_model.disconnect = mock_connection
     mock_model.is_connected.return_value = False
-    mock_model.get_status = get_stats_data()
+    mock_model.get_status = get_juju_stats_data()
     monkeypatch.setattr(
         "prometheus_juju_exporter.collector.Model",
         mock_model,
@@ -215,14 +262,15 @@ def mock_model_connection(monkeypatch):
 
 
 @pytest.fixture
-def exporter_daemon(monkeypatch):
+def exporter_daemon(monkeypatch, stats_gauge):
     """Mock exporter daemon."""
     from prometheus_juju_exporter.exporter import ExporterDaemon
 
     def _daemon(*args, **kwargs):
         # Clear global
-        mock_connection = mock.MagicMock()
+        mock_http_server = mock.MagicMock()
         mock_collector = mock.AsyncMock()
+        mock_collector.return_value = collected_stats_data()
         mock_async_sleep = mock.AsyncMock()
         mock_logger = mock.MagicMock()
         mock_logger.return_value = mock_logger
@@ -230,7 +278,7 @@ def exporter_daemon(monkeypatch):
 
         monkeypatch.setattr("prometheus_juju_exporter.config.config", None)
         monkeypatch.setattr(
-            "prometheus_juju_exporter.exporter.start_http_server", mock_connection
+            "prometheus_juju_exporter.exporter.start_http_server", mock_http_server
         )
         monkeypatch.setattr(
             "prometheus_juju_exporter.collector.CollectorDaemon.get_stats",
@@ -246,9 +294,7 @@ def exporter_daemon(monkeypatch):
 
 
 @pytest.fixture
-def collector_daemon(
-    monkeypatch, mock_model_connection, mock_controller_connection, stats_gauge
-):
+def collector_daemon(monkeypatch, mock_model_connection, mock_controller_connection):
     """Mock collector daemon."""
     from prometheus_juju_exporter.collector import CollectorDaemon
 
@@ -300,7 +346,7 @@ def mock_gauge():
 @pytest.fixture
 def stats_gauge(monkeypatch, mock_gauge):
     """Mock Gauge calls for the collector module path."""
-    monkeypatch.setattr("prometheus_juju_exporter.collector.Gauge", mock_gauge)
+    monkeypatch.setattr("prometheus_juju_exporter.exporter.Gauge", mock_gauge)
     gauge = mock_gauge
 
     return gauge
