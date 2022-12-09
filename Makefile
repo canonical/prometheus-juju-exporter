@@ -54,7 +54,8 @@ dev-environment:
 	@tox -r -e dev-environment
 
 functional: build
-	@echo "Functional test is not currently available"
+	@echo "Executing functional tests using built snap"
+	@TEST_SNAP=${SNAP_FILE} tox -e func -- ${FUNC_ARGS}
 
 pre-commit:
 	@tox -e pre-commit
