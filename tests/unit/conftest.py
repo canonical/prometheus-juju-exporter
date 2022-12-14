@@ -253,10 +253,6 @@ def mock_model_connection(monkeypatch):
     """Mock juju model for the collector module path."""
     mock_model = Model
     mock_model.get_status = get_juju_stats_data()
-    monkeypatch.setattr(
-        "prometheus_juju_exporter.collector.Model",
-        mock_model,
-    )
 
     return mock_model
 
