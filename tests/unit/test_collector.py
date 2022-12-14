@@ -1,10 +1,10 @@
 #!/usr/bin/python3
-"""Test collctor daemon."""
+"""Test collctor."""
 import pytest
 
 
 class TestCollectorDaemon:
-    """Collector daemon test class."""
+    """Collector test class."""
 
     def test_fixture(self, collector_daemon):
         """See if the helper fixture works to load charm configs."""
@@ -32,31 +32,35 @@ class TestCollectorDaemon:
         statsd = collector_daemon()
         await statsd.get_stats()
         assert statsd.currently_cached_labels == {
-            "juju-000ddd-test-0": {
-                "job": "prometheus-juju-exporter",
-                "hostname": "juju-000ddd-test-0",
-                "customer": "example_customer",
-                "cloud_name": "example_cloud",
-                "juju_model": "test",
-                "type": "kvm",
-                "value": 1,
-            },
-            "juju-000ddd-0-lxd-0": {
-                "job": "prometheus-juju-exporter",
-                "hostname": "juju-000ddd-0-lxd-0",
-                "customer": "example_customer",
-                "cloud_name": "example_cloud",
-                "juju_model": "test",
-                "type": "lxd",
-                "value": 1,
-            },
+            "juju-000ddd-test-0": (
+                {
+                    "job": "prometheus-juju-exporter",
+                    "hostname": "juju-000ddd-test-0",
+                    "customer": "example_customer",
+                    "cloud_name": "example_cloud",
+                    "juju_model": "test",
+                    "type": "kvm",
+                },
+                1,
+            ),
+            "juju-000ddd-0-lxd-0": (
+                {
+                    "job": "prometheus-juju-exporter",
+                    "hostname": "juju-000ddd-0-lxd-0",
+                    "customer": "example_customer",
+                    "cloud_name": "example_cloud",
+                    "juju_model": "test",
+                    "type": "lxd",
+                },
+                1,
+            ),
         }
 
     def test_create_gauge_label(self, collector_daemon):
         """Test _create_gauge_label function."""
         statsd = collector_daemon()
 
-        labels = statsd._create_gauge_label("host", "model", "machine", 0)
+        labels = statsd._create_gauge_label("host", "model", "machine")
 
         assert labels == {
             "job": "prometheus-juju-exporter",
@@ -65,7 +69,6 @@ class TestCollectorDaemon:
             "cloud_name": statsd.config["customer"]["cloud_name"].get(str),
             "juju_model": "model",
             "type": "machine",
-            "value": 0,
         }
 
     def test_get_gauge_value(self, collector_daemon):
@@ -84,33 +87,39 @@ class TestCollectorDaemon:
         statsd = collector_daemon()
 
         statsd.currently_cached_labels = {
-            "juju-000ddd-test-0": {
-                "job": "prometheus-juju-exporter",
-                "hostname": "juju-000ddd-test-0",
-                "customer": "example_customer",
-                "cloud_name": "example_cloud",
-                "juju_model": "test",
-                "type": "kvm",
-                "value": 1,
-            },
-            "juju-000ddd-0-lxd-0": {
-                "job": "prometheus-juju-exporter",
-                "hostname": "juju-000ddd-0-lxd-0",
-                "customer": "example_customer",
-                "cloud_name": "example_cloud",
-                "juju_model": "test",
-                "type": "lxd",
-                "value": 1,
-            },
-            "juju-000ddd-0-lxd-1": {
-                "job": "prometheus-juju-exporter",
-                "hostname": "juju-000ddd-0-lxd-1",
-                "customer": "example_customer",
-                "cloud_name": "example_cloud",
-                "juju_model": "test",
-                "type": "lxd",
-                "value": 1,
-            },
+            "juju-000ddd-test-0": (
+                {
+                    "job": "prometheus-juju-exporter",
+                    "hostname": "juju-000ddd-test-0",
+                    "customer": "example_customer",
+                    "cloud_name": "example_cloud",
+                    "juju_model": "test",
+                    "type": "kvm",
+                },
+                1,
+            ),
+            "juju-000ddd-0-lxd-0": (
+                {
+                    "job": "prometheus-juju-exporter",
+                    "hostname": "juju-000ddd-0-lxd-0",
+                    "customer": "example_customer",
+                    "cloud_name": "example_cloud",
+                    "juju_model": "test",
+                    "type": "lxd",
+                },
+                1,
+            ),
+            "juju-000ddd-0-lxd-1": (
+                {
+                    "job": "prometheus-juju-exporter",
+                    "hostname": "juju-000ddd-0-lxd-1",
+                    "customer": "example_customer",
+                    "cloud_name": "example_cloud",
+                    "juju_model": "test",
+                    "type": "lxd",
+                },
+                1,
+            ),
         }
 
         await statsd.get_stats()
@@ -122,7 +131,6 @@ class TestCollectorDaemon:
                 "example_cloud",
                 "test",
                 "lxd",
-                1,
             ]
         ]
 

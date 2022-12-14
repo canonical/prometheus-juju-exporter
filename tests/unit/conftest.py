@@ -171,24 +171,28 @@ def collected_stats_data():
                 "type",
             ],
             "labelvalues_update": [
-                {
-                    "job": "prometheus-juju-exporter",
-                    "hostname": "hostname1",
-                    "customer": "customer1",
-                    "cloud_name": "cloud name",
-                    "juju_model": "juju model",
-                    "type": "machine type",
-                    "value": 0,
-                },
-                {
-                    "job": "prometheus-juju-exporter",
-                    "hostname": "hostname2",
-                    "customer": "customer2",
-                    "cloud_name": "cloud name",
-                    "juju_model": "juju model",
-                    "type": "machine type",
-                    "value": 0,
-                },
+                (
+                    {
+                        "job": "prometheus-juju-exporter",
+                        "hostname": "hostname1",
+                        "customer": "customer1",
+                        "cloud_name": "cloud name",
+                        "juju_model": "juju model",
+                        "type": "machine type",
+                    },
+                    0,
+                ),
+                (
+                    {
+                        "job": "prometheus-juju-exporter",
+                        "hostname": "hostname2",
+                        "customer": "customer2",
+                        "cloud_name": "cloud name",
+                        "juju_model": "juju model",
+                        "type": "machine type",
+                    },
+                    0,
+                ),
             ],
             "labelvalues_remove": [
                 [
@@ -198,7 +202,6 @@ def collected_stats_data():
                     "cloud name",
                     "juju model",
                     "machine type",
-                    0,
                 ]
             ],
         }
@@ -281,12 +284,10 @@ def exporter_daemon(monkeypatch, stats_gauge):
             "prometheus_juju_exporter.exporter.start_http_server", mock_http_server
         )
         monkeypatch.setattr(
-            "prometheus_juju_exporter.collector.CollectorDaemon.get_stats",
+            "prometheus_juju_exporter.collector.Collector.get_stats",
             mock_collector,
         )
-        monkeypatch.setattr(
-            "prometheus_juju_exporter.logging.logging.getLogger", mock_logger
-        )
+        monkeypatch.setattr("prometheus_juju_exporter.logging.getLogger", mock_logger)
         monkeypatch.setattr("asyncio.sleep", mock_async_sleep)
         return ExporterDaemon(*args, **kwargs)
 
@@ -295,19 +296,17 @@ def exporter_daemon(monkeypatch, stats_gauge):
 
 @pytest.fixture
 def collector_daemon(monkeypatch, mock_model_connection, mock_controller_connection):
-    """Mock collector daemon."""
-    from prometheus_juju_exporter.collector import CollectorDaemon
+    """Mock collector."""
+    from prometheus_juju_exporter.collector import Collector
 
-    def _daemon(args=""):
+    def _daemon(*args, **kwargs):
         # Clear global
         monkeypatch.setattr("prometheus_juju_exporter.config.config", None)
         mock_logger = mock.MagicMock()
         mock_logger.return_value = mock_logger
         mock_logger.handlers = None
-        monkeypatch.setattr(
-            "prometheus_juju_exporter.logging.logging.getLogger", mock_logger
-        )
-        return CollectorDaemon(args)
+        monkeypatch.setattr("prometheus_juju_exporter.logging.getLogger", mock_logger)
+        return Collector(*args, **kwargs)
 
     return _daemon
 
@@ -338,7 +337,7 @@ def mock_gauge():
             self.values.append(value)
 
         def remove(self, *labelvalues):
-            self.values = {}
+            self.values = []
 
     return TestArgs()
 

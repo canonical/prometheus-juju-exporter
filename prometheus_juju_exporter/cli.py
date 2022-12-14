@@ -1,10 +1,22 @@
 import argparse
 
+from prometheus_juju_exporter import logger as project_logger
 from prometheus_juju_exporter.exporter import ExporterDaemon
 
 
+def config_logger(debug=False):
+    """Configure global logger's logging level.
+
+    :param bool debug: Whether to set logging level to debug
+    """
+    project_logger.setLevel("DEBUG" if debug else "INFO")
+
+
 def main(args=None):
-    """Program entry point."""
+    """Program entry point.
+
+    Parse cli arguments and start exporter daemon.
+    """
     cli = argparse.ArgumentParser(
         prog="prometheus-juju-exporter",
         description="PrometheusJujuExporter CLI",
@@ -15,7 +27,9 @@ def main(args=None):
     )
 
     parser, unknown = cli.parse_known_args(args)
-    obj = ExporterDaemon(debug=parser.debug)
+    config_logger(debug=parser.debug)
+
+    obj = ExporterDaemon()
     obj.run()
 
 

@@ -13,11 +13,6 @@ class TestExporterDaemon:
         stats_exporter_daemon = exporter_daemon()
         assert stats_exporter_daemon is not None
 
-    def test_setup_logging(self, exporter_daemon):
-        """Test setup logger."""
-        statsd = exporter_daemon(True)
-        statsd.logger.setLevel.assert_called_with("DEBUG")
-
     def test_parse_config(self, exporter_daemon):
         """Test config parsing."""
         statsd = exporter_daemon()
@@ -43,7 +38,7 @@ class TestExporterDaemon:
         statsd = exporter_daemon()
 
         with mock.patch(
-            "prometheus_juju_exporter.collector.CollectorDaemon.get_stats",
+            "prometheus_juju_exporter.collector.Collector.get_stats",
             side_effect=Exception("mocked error"),
         ):
             with mock.patch("prometheus_juju_exporter.exporter.exit") as exit_call:

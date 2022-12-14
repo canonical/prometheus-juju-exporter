@@ -1,10 +1,10 @@
 from enum import Enum
+from logging import getLogger
 
 from juju.controller import Controller
 from juju.model import Model
 
 from prometheus_juju_exporter.config import Config
-from prometheus_juju_exporter.logging import get_logger
 
 
 class MachineType(Enum):
@@ -13,19 +13,18 @@ class MachineType(Enum):
     LXD = "lxd"
 
 
-class CollectorDaemon:
-    """Core class of the PrometheusJujuExporter collector daemon."""
+class Collector:
+    """Core class of the PrometheusJujuExporter collector."""
 
-    def __init__(self, debug=False):
-        """Create new collector daemon and configure runtime environment."""
+    def __init__(self):
+        """Create new collector and configure runtime environment."""
         self.config = Config().get_config()
-        self.logger = get_logger(debug=debug)
+        self.logger = getLogger(__name__)
         self.controller = Controller()
         self.model = Model()
         self.data = {}
         self.currently_cached_labels = {}
         self.previously_cached_labels = {}
-        self
         self.logger.debug("Collector initialized")
         self.prefixes = [
             "52:54:00",
@@ -37,7 +36,12 @@ class CollectorDaemon:
         ]
 
     def refresh_cache(self, gauge_name, gauge_desc, labels):
-        """Create new instances for each collection job."""
+        """Refresh instances for each collection job.
+
+        :param str gauge_name: the name of the gauge
+        :param str gauge_desc: the description of the gauge
+        :param List[str] labels: the label set of the gauge
+        """
         self.data = {
             gauge_name: {
                 "gauge_desc": gauge_desc,
@@ -54,14 +58,31 @@ class CollectorDaemon:
         self.model = Model()
 
     async def _connect_controller(self, endpoint, username, password, cacert):
-        """Connect to a controller via its endpoint."""
+        """Connect to a controller via its endpoint.
+
+        :param str endpoint: the hostname:port endpoint of the controller
+            to connect to.
+        :param str username: the username for controller-local users
+        :param str password: the password for controller-local users
+        :param str cacert: the CA certificate of the controller
+            (PEM formatted)
+        """
         if not self.controller.is_connected():
             await self.controller.connect(
                 endpoint=endpoint, username=username, password=password, cacert=cacert
             )
 
     async def _get_models(self, endpoint, username, password, cacert):
-        """Get a list of all models under a controller."""
+        """Get a list of all models under a controller.
+
+        :param str endpoint: the hostname:port endpoint of the controller
+            to connect to.
+        :param str username: the username for controller-local users
+        :param str password: the password for controller-local users
+        :param str cacert: the CA certificate of the controller
+            (PEM formatted)
+        :return: str model_uuids: the uuids of all models under the controller
+        """
         await self._connect_controller(
             endpoint=endpoint, username=username, password=password, cacert=cacert
         )
@@ -71,7 +92,16 @@ class CollectorDaemon:
         return model_uuids
 
     async def _connect_model(self, uuid, endpoint, username, password, cacert):
-        """Connect to a model via its controller's endpoint."""
+        """Connect to a model via its controller's endpoint.
+
+        :param str uuid: the uuid of the model to connect to
+        :param str endpoint: the hostname:port endpoint of the controller
+            to connect to.
+        :param str username: the username for controller-local users
+        :param str password: the password for controller-local users
+        :param str cacert: the CA certificate of the controller
+            (PEM formatted)
+        """
         if not self.model.is_connected():
             await self.model.connect(
                 uuid=uuid,
@@ -82,13 +112,22 @@ class CollectorDaemon:
             )
 
     async def _get_machines_in_model(self):
-        """Get a list of all machines in the model with their stats."""
+        """Get a list of all machines in the model with their stats.
+
+        :return: status information for all machines in the model
+        """
         status = await self.model.get_status()
 
         return status["machines"]
 
-    def _create_gauge_label(self, hostname, model_name, machine_type, value):
-        """Create label dict for gauge."""
+    def _create_gauge_label(self, hostname, model_name, machine_type):
+        """Create label dict for gauge.
+
+        :param str hostname: the hostnameof the machine
+        :param str model_name: the name of the model the machine is in
+        :param str machine_type: the hardware type of the machine
+        :return dict labelvalues: the label values in dict format
+        """
         return {
             "job": "prometheus-juju-exporter",
             "hostname": hostname,
@@ -96,14 +135,17 @@ class CollectorDaemon:
             "cloud_name": self.config["customer"]["cloud_name"].get(str),
             "juju_model": model_name,
             "type": machine_type,
-            "value": value,
         }
 
-    def _get_gauge_value(self, status):
-        """Get numerical value for the running status."""
-        if status == "started":
-            return 1
-        return 0
+    @staticmethod
+    def _get_gauge_value(status):
+        """Get numerical value for the running status.
+
+        :param str status: the running status of the machine
+        :return int status: the integer representation of the running status.
+            0 for inactive, 1 for active.
+        """
+        return int(status == "started")
 
     def _get_labels_to_remove(self, gauge_name):
         """Get a list of labelvalues for removed machines."""
@@ -113,69 +155,72 @@ class CollectorDaemon:
             - set(self.currently_cached_labels)
         }
 
-        for host in stale_labels.keys():
-            self.data[gauge_name]["labelvalues_remove"].append(
-                list(stale_labels[host].values())
-            )
+        for label in stale_labels.values():
+            print(label)
+            self.data[gauge_name]["labelvalues_remove"].append(list(label[0].values()))
 
     async def _get_machine_stats(self, machines, model_name, gauge_name):
-        """Get baremetal or vm machines' stats."""
-        if machines != {} and len(machines.keys()) > 0:
-            for machine_num in machines.keys():
-                # check machine type with the prefix of its main mac_address
-                interfaces = machines[machine_num]["network-interfaces"].values()
-                mac_addresses = [i["mac-address"] for i in interfaces]
-                virt_address = list(
-                    filter(lambda s: s.startswith(tuple(self.prefixes)), mac_addresses)
-                )
-                machine_type = (
-                    MachineType.KVM if len(virt_address) > 0 else MachineType.METAL
+        """Get baremetal or vm machines' stats.
+
+        :param dict machines: status information for all machines in the model
+        :param str model_name: the name of the model the machines are in
+        :param str gauge_name: the name of the gauge
+        """
+        for machine in machines.values():
+            # check machine type with the prefix of its mac address
+            interfaces = machine["network-interfaces"].values()
+            machine_type = MachineType.METAL
+
+            for i in interfaces:
+                mac_addresses = i["mac-address"]
+                if mac_addresses.startswith(tuple(self.prefixes)):
+                    machine_type = MachineType.KVM
+                    break
+
+            value = self._get_gauge_value(status=machine["agent-status"]["status"])
+
+            labels = self._create_gauge_label(
+                hostname=machine["hostname"],
+                model_name=model_name,
+                machine_type=machine_type.value,
+            )
+
+            if labels["hostname"] and labels["hostname"] != "None":
+                self.currently_cached_labels[machine["hostname"]] = (
+                    labels.copy(),
+                    value,
                 )
 
-                value = self._get_gauge_value(
-                    status=machines[machine_num]["agent-status"]["status"]
-                )
+                self.data[gauge_name]["labelvalues_update"].append((labels, value))
 
-                labels = self._create_gauge_label(
-                    hostname=machines[machine_num]["hostname"],
-                    model_name=model_name,
-                    machine_type=machine_type.value,
-                    value=value,
-                )
-
-                if labels["hostname"] and labels["hostname"] != "None":
-                    self.currently_cached_labels[
-                        machines[machine_num]["hostname"]
-                    ] = labels.copy()
-
-                    self.data[gauge_name]["labelvalues_update"].append(labels)
-
-                self._get_container_status(
-                    containers=machines[machine_num]["containers"],
-                    model_name=model_name,
-                    gauge_name=gauge_name,
-                )
+            self._get_container_status(
+                containers=machine["containers"],
+                model_name=model_name,
+                gauge_name=gauge_name,
+            )
 
     def _get_container_status(self, containers, model_name, gauge_name):
-        """Get lxd containers stats."""
-        if containers != {} and len(containers.keys()) > 0:
-            for container_num in containers.keys():
-                value = self._get_gauge_value(
-                    containers[container_num]["agent-status"]["status"]
-                )
+        """Get lxd containers stats.
 
-                labels = self._create_gauge_label(
-                    hostname=containers[container_num]["hostname"],
-                    model_name=model_name,
-                    machine_type=MachineType.LXD.value,
-                    value=value,
-                )
+        :param dict containers: status information for all containers on a machine
+        :param str model_name: the name of the model the machines are in
+        :param str gauge_name: the name of the gauge
+        """
+        for container in containers.values():
+            value = self._get_gauge_value(container["agent-status"]["status"])
 
-                if labels["hostname"] and labels["hostname"] != "None":
-                    self.currently_cached_labels[
-                        containers[container_num]["hostname"]
-                    ] = labels.copy()
-                    self.data[gauge_name]["labelvalues_update"].append(labels)
+            labels = self._create_gauge_label(
+                hostname=container["hostname"],
+                model_name=model_name,
+                machine_type=MachineType.LXD.value,
+            )
+
+            if labels["hostname"] and labels["hostname"] != "None":
+                self.currently_cached_labels[container["hostname"]] = (
+                    labels.copy(),
+                    value,
+                )
+                self.data[gauge_name]["labelvalues_update"].append((labels, value))
 
     async def get_stats(self):
         """Get stats from all machines."""
@@ -200,10 +245,10 @@ class CollectorDaemon:
         )
         self.logger.debug("List of models in controller: %s", model_uuids)
 
-        for model_name in model_uuids.keys():
-            self.logger.debug("Checking model '%s'...", model_name)
+        for name, uuid_ in model_uuids.items():
+            self.logger.debug("Checking model '%s'...", name)
             await self._connect_model(
-                uuid=model_uuids[model_name],
+                uuid=uuid_,
                 endpoint=endpoint,
                 username=username,
                 password=password,
@@ -211,7 +256,7 @@ class CollectorDaemon:
             )
             machines = await self._get_machines_in_model()
             await self._get_machine_stats(
-                machines=machines, model_name=model_name, gauge_name=gauge_name
+                machines=machines, model_name=name, gauge_name=gauge_name
             )
             await self.model.disconnect()
 

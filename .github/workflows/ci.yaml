@@ -19,6 +19,8 @@ jobs:
           python-version: "3.8"
       - name: Install tox and any other packages
         run: pip install tox
+      - name: Run lint checkers
+        run: make lint
       - name: Run tox
         run: make unittests
       - name: SonarCloud Scan
