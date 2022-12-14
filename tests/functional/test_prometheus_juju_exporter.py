@@ -2,6 +2,8 @@
 """Test exporter daemon."""
 from subprocess import check_call
 
+from helpers import add_machine, get_machines_counts, get_registry_data, remove_machine
+
 
 def test_snap_startup():
     """Check if the snap is in active state."""
@@ -13,13 +15,13 @@ def test_snap_startup():
     )
 
 
-def test_connect_registry(get_registry_data):
+def test_connect_registry():
     """Check if registry can be reached via HTTP requests."""
     registry_data = get_registry_data()
     assert registry_data is not None
 
 
-def test_machine_counts(get_machines_counts, get_registry_data):
+def test_machine_counts():
     """Test if the snap correct recports total, active, and inactive machine counts."""
     machine_count = get_machines_counts()
     registry_data = get_registry_data()
@@ -35,7 +37,7 @@ def test_machine_counts(get_machines_counts, get_registry_data):
     assert len(down_machines) == machine_count["down"]
 
 
-def test_add_machine(add_machine, get_registry_data):
+def test_add_machine():
     """Test if the snap correctly recports machine counts when adding a machine."""
     current_registry_data = get_registry_data()
     current_machines = [
@@ -58,7 +60,7 @@ def test_add_machine(add_machine, get_registry_data):
     assert len(new_machines) == target_count
 
 
-def test_remove_machine(remove_machine, get_registry_data):
+def test_remove_machine():
     """Test if the snap correctly recports machine counts when removing a machine."""
     current_registry_data = get_registry_data()
     current_machines = [

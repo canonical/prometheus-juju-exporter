@@ -1,11 +1,7 @@
-import json
 import logging
 import os
-import urllib.request
 from subprocess import check_call, check_output
-from time import sleep
 
-import juju_wait
 import pytest
 import yaml
 
@@ -13,8 +9,6 @@ JUJU_CRED_DIR = "/home/ubuntu/.local/share/juju/"
 SNAP_CONFIG_DIR = "/var/snap/prometheus-juju-exporter/"
 TMP_DIR = "/tmp"
 SNAP_NAME = "prometheus-juju-exporter"
-
-COLLECTION_INTERVAL = 60  # collection interval in secondss
 
 
 def get_juju_data():
@@ -61,7 +55,7 @@ def generate_config_data(user, password, cacert, endpoint):
         },
         "exporter": {
             "port": 5000,
-            "collect_interval": int(COLLECTION_INTERVAL / 60),
+            "collect_interval": 1,
         },
     }
 
@@ -147,122 +141,3 @@ def setup_test_model():
     check_call(
         f"juju destroy-model --destroy-storage --force -y {test_model_name}".split()
     )
-
-
-@pytest.fixture
-def get_registry_data():
-    """Connect to the registry and wait to get labelbalues data upon completing the collection."""
-
-    def _get_registry():
-        previous_registry_data = None
-        registry_data = None
-        connection_retry = 0
-
-        # Make sure the registry_data is accessible and collection process
-        # is complete (no more labelvalues added to registry)
-        while connection_retry < 10 and (
-            registry_data is None or registry_data != previous_registry_data
-        ):
-            try:
-                previous_registry_data = registry_data
-                localhost = urllib.request.urlopen("http://localhost:5000/", timeout=60)
-                sleep(COLLECTION_INTERVAL)
-                registry_data = localhost.read()
-                localhost.close()
-            except urllib.error.URLError as e:
-                connection_retry += 1
-                logging.debug(
-                    "Unable to connect to registry. This is the %d's attempt. %s",
-                    connection_retry,
-                    e,
-                )
-                sleep(10)
-        return registry_data
-
-    return _get_registry
-
-
-@pytest.fixture
-def get_juju_models():
-    """Get a list of juju models under the current controller."""
-
-    def _get_models():
-        models_output = check_output("juju models --format json".split()).decode()
-        models = json.loads(models_output)
-
-        model_names = []
-        for model in models["models"]:
-            model_names.append(model["short-name"])
-        return model_names
-
-    return _get_models
-
-
-@pytest.fixture
-def get_machines_counts(get_juju_models):
-    """Get the number of active and inactive machines under the current controller."""
-
-    def _get_state(node, machine_counts):
-        if node["juju-status"]["current"] == "started":
-            machine_counts["up"] += 1
-        else:
-            machine_counts["down"] += 1
-
-    def _count_machines():
-        models = get_juju_models()
-        machine_counts = {"up": 0, "down": 0}
-        for model in models:
-            machiens_output = check_output(
-                f"juju machines -m {model} --format json".split()
-            ).decode()
-            machines = json.loads(machiens_output)
-
-            for machine in machines["machines"].keys():
-                _get_state(machines["machines"][machine], machine_counts)
-
-                if "containers" in machines["machines"][machine].keys():
-                    for container in machines["machines"][machine]["containers"].keys():
-                        _get_state(
-                            machines["machines"][machine]["containers"][container],
-                            machine_counts,
-                        )
-
-        return machine_counts
-
-    return _count_machines
-
-
-@pytest.fixture
-def juju_wait_until_complete():
-    """Block until the reaching target status."""
-
-    def _wait():
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        logging.info("Calling juju-wait")
-        juju_wait.wait(logger, machine_pending_timeout=600)
-        logging.debug("juju-wait complete")
-
-    return _wait
-
-
-@pytest.fixture
-def add_machine(juju_wait_until_complete):
-    """Add a machine to the test model."""
-
-    def _add_mchine():
-        assert check_call("juju add-machine".split()) == 0  # noqa
-        juju_wait_until_complete()
-
-    return _add_mchine
-
-
-@pytest.fixture
-def remove_machine(juju_wait_until_complete):
-    """Remove a machine from the test model."""
-
-    def _remove_mchine():
-        assert check_call("juju remove-machine 0".split()) == 0  # noqa
-        juju_wait_until_complete()
-
-    return _remove_mchine
