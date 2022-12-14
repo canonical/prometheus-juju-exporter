@@ -229,7 +229,7 @@ def config_instance(monkeypatch):
 
 
 @pytest.fixture
-def mock_controller_connection(monkeypatch):
+def mock_controller_connection(monkeypatch, mock_model_connection):
     """Mock juju controller for the collector module path."""
     mock_controller = Controller
     mock_connection = mock.AsyncMock()
@@ -238,6 +238,8 @@ def mock_controller_connection(monkeypatch):
     mock_controller.disconnect = mock_connection
     mock_controller.is_connected.return_value = False
     mock_controller.model_uuids = get_model_list_data()
+    mock_controller.get_model = mock.AsyncMock()
+    mock_controller.get_model.return_value = mock_model_connection()
     monkeypatch.setattr(
         "prometheus_juju_exporter.collector.Controller",
         mock_controller,
@@ -250,11 +252,6 @@ def mock_controller_connection(monkeypatch):
 def mock_model_connection(monkeypatch):
     """Mock juju model for the collector module path."""
     mock_model = Model
-    mock_connection = mock.AsyncMock()
-    mock_connection.return_value = mock_connection
-    mock_model.connect = mock_connection
-    mock_model.disconnect = mock_connection
-    mock_model.is_connected.return_value = False
     mock_model.get_status = get_juju_stats_data()
     monkeypatch.setattr(
         "prometheus_juju_exporter.collector.Model",

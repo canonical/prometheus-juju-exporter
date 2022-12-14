@@ -20,8 +20,7 @@ class Collector:
         """Create new collector and configure runtime environment."""
         self.config = Config().get_config()
         self.logger = getLogger(__name__)
-        self.controller = Controller()
-        self.model = Model()
+        self.controller = Controller(max_frame_size= 6**24)
         self.data = {}
         self.currently_cached_labels = {}
         self.previously_cached_labels = {}
@@ -54,8 +53,7 @@ class Collector:
         self.previously_cached_labels = self.currently_cached_labels.copy()
         self.currently_cached_labels = dict()
 
-        self.controller = Controller()
-        self.model = Model()
+        self.controller = Controller(max_frame_size= 6**24)
 
     async def _connect_controller(self, endpoint, username, password, cacert):
         """Connect to a controller via its endpoint.
@@ -83,40 +81,17 @@ class Collector:
             (PEM formatted)
         :return: str model_uuids: the uuids of all models under the controller
         """
-        await self._connect_controller(
-            endpoint=endpoint, username=username, password=password, cacert=cacert
-        )
         model_uuids = await self.controller.model_uuids()
-        await self.controller.disconnect()
 
         return model_uuids
 
-    async def _connect_model(self, uuid, endpoint, username, password, cacert):
-        """Connect to a model via its controller's endpoint.
-
-        :param str uuid: the uuid of the model to connect to
-        :param str endpoint: the hostname:port endpoint of the controller
-            to connect to.
-        :param str username: the username for controller-local users
-        :param str password: the password for controller-local users
-        :param str cacert: the CA certificate of the controller
-            (PEM formatted)
-        """
-        if not self.model.is_connected():
-            await self.model.connect(
-                uuid=uuid,
-                endpoint=endpoint,
-                username=username,
-                password=password,
-                cacert=cacert,
-            )
-
-    async def _get_machines_in_model(self):
+    async def _get_machines_in_model(self, uuid):
         """Get a list of all machines in the model with their stats.
 
         :return: status information for all machines in the model
         """
-        status = await self.model.get_status()
+        model = await self.controller.get_model(uuid)
+        status = await model.get_status()
 
         return status["machines"]
 
@@ -156,7 +131,6 @@ class Collector:
         }
 
         for label in stale_labels.values():
-            print(label)
             self.data[gauge_name]["labelvalues_remove"].append(list(label[0].values()))
 
     async def _get_machine_stats(self, machines, model_name, gauge_name):
@@ -240,26 +214,25 @@ class Collector:
         username = self.config["juju"]["username"].get(str)
         password = self.config["juju"]["password"].get(str)
         cacert = self.config["juju"]["controller_cacert"].get(str)
-        model_uuids = await self._get_models(
-            endpoint=endpoint, username=username, password=password, cacert=cacert
-        )
-        self.logger.debug("List of models in controller: %s", model_uuids)
-
-        for name, uuid_ in model_uuids.items():
-            self.logger.debug("Checking model '%s'...", name)
-            await self._connect_model(
-                uuid=uuid_,
-                endpoint=endpoint,
-                username=username,
-                password=password,
-                cacert=cacert,
+        
+        try:
+            await self._connect_controller(
+                endpoint=endpoint, username=username, password=password, cacert=cacert
             )
-            machines = await self._get_machines_in_model()
-            await self._get_machine_stats(
-                machines=machines, model_name=name, gauge_name=gauge_name
+            model_uuids = await self._get_models(
+                endpoint=endpoint, username=username, password=password, cacert=cacert
             )
-            await self.model.disconnect()
+            self.logger.debug("List of models in controller: %s", model_uuids)
 
-        self._get_labels_to_remove(gauge_name=gauge_name)
+            for name, uuid_ in model_uuids.items():
+                self.logger.debug("Checking model '%s'...", name)
+                machines = await self._get_machines_in_model(uuid=uuid_)
+                await self._get_machine_stats(
+                    machines=machines, model_name=name, gauge_name=gauge_name
+                )
 
+            self._get_labels_to_remove(gauge_name=gauge_name)
+        finally:
+            await self.controller.disconnect()
+        
         return self.data

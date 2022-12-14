@@ -20,7 +20,7 @@ class ExporterDaemon:
         self.collector = Collector()
         self.logger.debug("Exporter initialized")
 
-    def _create_metrics_dict(self, gauge_name, gauge_desc, labels=[]):
+    def _create_metrics_dict(self, gauge_name, gauge_desc, labels):
         """Create a dict of gauge instances.
 
         :param str gauge_name: the name of the gauge

@@ -169,23 +169,3 @@ class TestCollectorDaemon:
             password=statsd.config["juju"]["password"].get(),
             cacert=statsd.config["juju"]["controller_cacert"].get(),
         )
-
-    @pytest.mark.asyncio
-    async def test_connect_model(self, collector_daemon):
-        """Test _connect_model function."""
-        statsd = collector_daemon()
-        await statsd._connect_model(
-            uuid="68c4cc81-9b3d-44a2-a419-d25dfb9d5588",
-            endpoint=statsd.config["juju"]["controller_endpoint"].get(),
-            username=statsd.config["juju"]["username"].get(),
-            password=statsd.config["juju"]["password"].get(),
-            cacert=statsd.config["juju"]["controller_cacert"].get(),
-        )
-
-        statsd.model.connect.assert_called_once_with(
-            uuid="68c4cc81-9b3d-44a2-a419-d25dfb9d5588",
-            endpoint=statsd.config["juju"]["controller_endpoint"].get(),
-            username=statsd.config["juju"]["username"].get(),
-            password=statsd.config["juju"]["password"].get(),
-            cacert=statsd.config["juju"]["controller_cacert"].get(),
-        )
