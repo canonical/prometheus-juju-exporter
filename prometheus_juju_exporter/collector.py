@@ -2,7 +2,6 @@ from enum import Enum
 from logging import getLogger
 
 from juju.controller import Controller
-from juju.model import Model
 
 from prometheus_juju_exporter.config import Config
 
@@ -20,7 +19,7 @@ class Collector:
         """Create new collector and configure runtime environment."""
         self.config = Config().get_config()
         self.logger = getLogger(__name__)
-        self.controller = Controller(max_frame_size= 6**24)
+        self.controller = Controller(max_frame_size=6**24)
         self.data = {}
         self.currently_cached_labels = {}
         self.previously_cached_labels = {}
@@ -53,7 +52,7 @@ class Collector:
         self.previously_cached_labels = self.currently_cached_labels.copy()
         self.currently_cached_labels = dict()
 
-        self.controller = Controller(max_frame_size= 6**24)
+        self.controller = Controller(max_frame_size=6**24)
 
     async def _connect_controller(self, endpoint, username, password, cacert):
         """Connect to a controller via its endpoint.
@@ -214,7 +213,7 @@ class Collector:
         username = self.config["juju"]["username"].get(str)
         password = self.config["juju"]["password"].get(str)
         cacert = self.config["juju"]["controller_cacert"].get(str)
-        
+
         try:
             await self._connect_controller(
                 endpoint=endpoint, username=username, password=password, cacert=cacert
@@ -234,5 +233,5 @@ class Collector:
             self._get_labels_to_remove(gauge_name=gauge_name)
         finally:
             await self.controller.disconnect()
-        
+
         return self.data
