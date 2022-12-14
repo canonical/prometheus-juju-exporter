@@ -1,32 +1,76 @@
 import asyncio
+from logging import getLogger
 
-from prometheus_client import CollectorRegistry, start_http_server
+from prometheus_client import CollectorRegistry, Gauge, start_http_server
 
-from prometheus_juju_exporter.collector import CollectorDaemon
+from prometheus_juju_exporter.collector import Collector
 from prometheus_juju_exporter.config import Config
-from prometheus_juju_exporter.logging import get_logger
 
 
 class ExporterDaemon:
     """Core class of the exporter daemon."""
 
-    def __init__(self, debug=False):
+    def __init__(self):
         """Create new daemon and configure runtime environment."""
         self.config = Config().get_config()
-        self.logger = get_logger(debug=debug)
+        self.logger = getLogger(__name__)
         self.logger.info("Parsed config: %s", self.config.config_dir())
         self._registry = CollectorRegistry()
-        self.collector = CollectorDaemon(self._registry, debug=debug)
+        self.metrics = {}
+        self.collector = Collector()
         self.logger.debug("Exporter initialized")
 
+    def _create_metrics_dict(self, gauge_name, gauge_desc, labels):
+        """Create a dict of gauge instances.
+
+        :param str gauge_name: the name of the gauge
+        :param str gauge_desc: the description of the gauge
+        :param List[str] labels: the label set of the gauge
+        """
+        if gauge_name not in self.metrics:
+            self.logger.debug("Creating Gauge %s", gauge_name)
+            self.metrics[gauge_name] = Gauge(
+                gauge_name, gauge_desc, labelnames=labels, registry=self._registry
+            )
+
+    def update_registry(self, data):
+        """Update the registry with newly collected values.
+
+        :param dict data: the machine data collected by the Collector method
+        """
+        for gauge_name, values in data.items():
+            self._create_metrics_dict(
+                gauge_name=gauge_name,
+                gauge_desc=values["gauge_desc"],
+                labels=values["labels"],
+            )
+            for labels, value in values["labelvalues_update"]:
+                self.logger.debug(
+                    "Updating Gauge %s, %s: %s", gauge_name, labels, value
+                )
+                self.metrics[gauge_name].labels(**labels).set(value)
+
+            for labels in values["labelvalues_remove"]:
+                self.logger.debug(
+                    "Deleting labelvalues %s from %s...", labels, gauge_name
+                )
+                self.metrics[gauge_name].remove(*labels)
+
     async def trigger(self, **kwargs):
-        """Configure prometheus_client gauges from generated stats."""
+        """Call Collector and configure prometheus_client gauges from generated stats.
+
+        Available parameters are:
+
+        :param bool once: Whether to continuously collect data. If set
+            to true, trigger function will only run once.
+        """
         run_collector = True
 
         while run_collector:
             try:
                 self.logger.info("Collecting gauges...")
-                await self.collector.get_stats()
+                data = await self.collector.get_stats()
+                self.update_registry(data)
                 self.logger.info("Gauges collected and ready for exporting.")
                 await asyncio.sleep(
                     self.config["exporter"]["collect_interval"].get(int) * 60
@@ -40,7 +84,13 @@ class ExporterDaemon:
                 run_collector = False
 
     def run(self, **kwargs):
-        """Run exporter."""
+        """Run exporter.
+
+        Available parameters are:
+
+        :param bool once: Whether to run exporter daemon continuously. If set
+            to true, trigger function will only run once.
+        """
         self.logger.debug("Running prometheus client http server.")
         start_http_server(
             self.config["exporter"]["port"].get(int),

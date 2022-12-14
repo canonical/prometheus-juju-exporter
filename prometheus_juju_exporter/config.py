@@ -1,9 +1,8 @@
 """Configuration loader."""
 from collections import OrderedDict
+from logging import getLogger
 
 import confuse
-
-from prometheus_juju_exporter.logging import get_logger
 
 config = None
 
@@ -13,7 +12,7 @@ class Config:
 
     def __init__(self, args=None):
         """Initialize the config class."""
-        self.logger = get_logger()
+        self.logger = getLogger(__name__)
 
         if args:
             self.config.set_args(args, dots=True)
@@ -22,6 +21,7 @@ class Config:
 
     @property
     def config(self):
+        """Return the configuration parsed from the config file."""
         global config
 
         if config is None:
@@ -30,6 +30,7 @@ class Config:
         return config
 
     def validate_config_options(self):
+        """Validate the configuration values against a template."""
         template = {
             "exporter": OrderedDict(
                 [

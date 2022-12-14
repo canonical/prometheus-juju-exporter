@@ -19,7 +19,9 @@ jobs:
           python-version: "3.8"
       - name: Install tox and any other packages
         run: pip install "tox < 4" #tox has breaking changes in major version 4
-      - name: Run tox
+      - name: Run lint checkers
+        run: make lint
+      - name: Run unittests
         run: make unittests
       - name: Save PR number to file
         run: echo ${{ github.event.number }} > PR_NUMBER.txt

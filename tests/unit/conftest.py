@@ -5,8 +5,207 @@ import os
 import unittest.mock as mock
 
 import pytest
+from juju.controller import Controller
+from juju.model import Model
 
 os.environ["PROMETHEUSJUJUEXPORTERDIR"] = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_model_list_data():
+    """Mock controller.model_uuids."""
+    mock_model_list = mock.AsyncMock()
+
+    # uuids are randomly generated for testing purposes
+    mock_model_list.return_value = {
+        "controller": "65f76aed-789f-4dbf-a75a-a32e5d90ab7e",
+        "default": "77643b91-a6f8-4cf6-8755-83c6becd09bb",
+        "test": "68c4cc81-9b3d-44a2-a419-d25dfb9d5588",
+    }
+
+    return mock_model_list
+
+
+def get_juju_stats_data():
+    """Mock model.get_status."""
+    mock_stats = mock.AsyncMock()
+
+    mock_stats.return_value = {
+        "model": {
+            "name": "test",
+            "type": "iaas",
+            "controller": "test-cloud-local",
+            "cloud": "test-cloud",
+            "region": "local",
+            "version": "2.9.29",
+            "model-status": {"current": "available", "since": "24 Nov 2022 13:19:09Z"},
+            "sla": "unsupported",
+        },
+        "machines": {
+            "0": {
+                "agent-status": {
+                    "status": "started",
+                    "since": "24 Nov 2022 13:21:25Z",
+                    "version": "2.9.29",
+                },
+                "hostname": "juju-000ddd-test-0",
+                "dns-name": "10.5.0.18",
+                "ip-addresses": ["10.5.0.01", "252.0.0.1"],
+                "instance-id": "149e81c8-a05b-4852-9201-434670598c30",
+                "instance-status": {
+                    "status": "running",
+                    "message": "ACTIVE",
+                    "since": "24 Nov 2022 13:20:33Z",
+                },
+                "modification-status": {
+                    "current": "idle",
+                    "since": "24 Nov 2022 13:19:43Z",
+                },
+                "series": "focal",
+                "network-interfaces": {
+                    "ens3": {
+                        "ip-addresses": ["10.5.0.01"],
+                        "mac-address": "fa:16:3e:d4:00:00",
+                        "gateway": "10.5.0.1",
+                        "space": "alpha",
+                        "is-up": "true",
+                    },
+                    "fan-252": {
+                        "ip-addresses": ["252.0.0.1"],
+                        "mac-address": "9e:fc:ca:87:00:00",
+                        "space": "alpha",
+                        "is-up": "true",
+                    },
+                    "lxdbr0": {
+                        "ip-addresses": ["10.100.00.1"],
+                        "mac-address": "00:16:3e:e1:00:00",
+                        "is-up": "true",
+                    },
+                },
+                "containers": {
+                    "0/lxd/0": {
+                        "agent-status": {
+                            "status": "started",
+                            "since": "24 Nov 2022 13:23:50Z",
+                            "version": "2.9.29",
+                        },
+                        "hostname": "juju-000ddd-0-lxd-0",
+                        "dns-name": "252.0.0.190",
+                        "ip-addresses": ["252.0.0.190"],
+                        "instance-id": "juju-000ddd-0-lxd-0",
+                        "instance-status": {
+                            "status": "running",
+                            "message": "Container started",
+                            "since": "24 Nov 2022 13:22:46Z",
+                        },
+                        "modification-status": {
+                            "current": "applied",
+                            "since": "24 Nov 2022 13:22:46Z",
+                        },
+                        "series": "focal",
+                        "network-interfaces": {
+                            "eth0": {
+                                "ip-addresses": ["252.0.0.190"],
+                                "mac-address": "00:16:3e:7f:00:00",
+                                "gateway": "252.0.0.1",
+                                "space": "alpha",
+                                "is-up": "true",
+                            }
+                        },
+                        "constraints": "arch=amd64 spaces=",
+                        "hardware": "availability-zone=nova",
+                    }
+                },
+                "hardware": "arch=amd64 cores=1 mem=2048M root-disk=20480M availability-zone=nova",
+            }
+        },
+        "applications": {
+            "ubuntu": {
+                "charm": "ubuntu",
+                "series": "focal",
+                "os": "ubuntu",
+                "charm-origin": "charmhub",
+                "charm-name": "ubuntu",
+                "charm-rev": 21,
+                "charm-channel": "stable",
+                "exposed": "false",
+                "application-status": {
+                    "current": "active",
+                    "since": "24 Nov 2022 13:23:52Z",
+                },
+                "units": {
+                    "ubuntu/0": {
+                        "workload-status": {
+                            "current": "active",
+                            "since": "24 Nov 2022 13:23:52Z",
+                        },
+                        "juju-status": {
+                            "current": "idle",
+                            "since": "24 Nov 2022 13:23:56Z",
+                            "version": "2.9.29",
+                        },
+                        "leader": "true",
+                        "machine": "0/lxd/0",
+                        "public-address": "252.0.18.190",
+                    }
+                },
+                "version": "20.04",
+            }
+        },
+        "storage": {},
+        "controller": {"timestamp": "13:38:17Z"},
+    }
+
+    return mock_stats
+
+
+def collected_stats_data():
+    return {
+        "example_gauge": {
+            "gauge_desc": "This is an example gauge",
+            "labels": [
+                "job",
+                "hostname",
+                "customer",
+                "cloud_name",
+                "juju_model",
+                "type",
+            ],
+            "labelvalues_update": [
+                (
+                    {
+                        "job": "prometheus-juju-exporter",
+                        "hostname": "hostname1",
+                        "customer": "customer1",
+                        "cloud_name": "cloud name",
+                        "juju_model": "juju model",
+                        "type": "machine type",
+                    },
+                    0,
+                ),
+                (
+                    {
+                        "job": "prometheus-juju-exporter",
+                        "hostname": "hostname2",
+                        "customer": "customer2",
+                        "cloud_name": "cloud name",
+                        "juju_model": "juju model",
+                        "type": "machine type",
+                    },
+                    0,
+                ),
+            ],
+            "labelvalues_remove": [
+                [
+                    "prometheus-juju-exporter",
+                    "hostname3",
+                    "customer3",
+                    "cloud name",
+                    "juju model",
+                    "machine type",
+                ]
+            ],
+        }
+    }
 
 
 @pytest.fixture
@@ -30,14 +229,44 @@ def config_instance(monkeypatch):
 
 
 @pytest.fixture
-def exporter_daemon(monkeypatch):
+def mock_controller_connection(monkeypatch, mock_model_connection):
+    """Mock juju controller for the collector module path."""
+    mock_controller = Controller
+    mock_connection = mock.AsyncMock()
+    mock_connection.return_value = mock_connection
+    mock_controller.connect = mock_connection
+    mock_controller.disconnect = mock_connection
+    mock_controller.is_connected.return_value = False
+    mock_controller.model_uuids = get_model_list_data()
+    mock_controller.get_model = mock.AsyncMock()
+    mock_controller.get_model.return_value = mock_model_connection()
+    monkeypatch.setattr(
+        "prometheus_juju_exporter.collector.Controller",
+        mock_controller,
+    )
+
+    return mock_controller
+
+
+@pytest.fixture
+def mock_model_connection(monkeypatch):
+    """Mock juju model for the collector module path."""
+    mock_model = Model
+    mock_model.get_status = get_juju_stats_data()
+
+    return mock_model
+
+
+@pytest.fixture
+def exporter_daemon(monkeypatch, stats_gauge):
     """Mock exporter daemon."""
     from prometheus_juju_exporter.exporter import ExporterDaemon
 
     def _daemon(*args, **kwargs):
         # Clear global
-        mock_connection = mock.MagicMock()
+        mock_http_server = mock.MagicMock()
         mock_collector = mock.AsyncMock()
+        mock_collector.return_value = collected_stats_data()
         mock_async_sleep = mock.AsyncMock()
         mock_logger = mock.MagicMock()
         mock_logger.return_value = mock_logger
@@ -45,15 +274,13 @@ def exporter_daemon(monkeypatch):
 
         monkeypatch.setattr("prometheus_juju_exporter.config.config", None)
         monkeypatch.setattr(
-            "prometheus_juju_exporter.exporter.start_http_server", mock_connection
+            "prometheus_juju_exporter.exporter.start_http_server", mock_http_server
         )
         monkeypatch.setattr(
-            "prometheus_juju_exporter.collector.CollectorDaemon.get_stats",
+            "prometheus_juju_exporter.collector.Collector.get_stats",
             mock_collector,
         )
-        monkeypatch.setattr(
-            "prometheus_juju_exporter.logging.logging.getLogger", mock_logger
-        )
+        monkeypatch.setattr("prometheus_juju_exporter.logging.getLogger", mock_logger)
         monkeypatch.setattr("asyncio.sleep", mock_async_sleep)
         return ExporterDaemon(*args, **kwargs)
 
@@ -61,20 +288,18 @@ def exporter_daemon(monkeypatch):
 
 
 @pytest.fixture
-def collector_daemon(monkeypatch, stats_gauge):
-    """Mock collector daemon."""
-    from prometheus_juju_exporter.collector import CollectorDaemon
+def collector_daemon(monkeypatch, mock_model_connection, mock_controller_connection):
+    """Mock collector."""
+    from prometheus_juju_exporter.collector import Collector
 
-    def _daemon(args=""):
+    def _daemon(*args, **kwargs):
         # Clear global
         monkeypatch.setattr("prometheus_juju_exporter.config.config", None)
         mock_logger = mock.MagicMock()
         mock_logger.return_value = mock_logger
         mock_logger.handlers = None
-        monkeypatch.setattr(
-            "prometheus_juju_exporter.logging.logging.getLogger", mock_logger
-        )
-        return CollectorDaemon(args)
+        monkeypatch.setattr("prometheus_juju_exporter.logging.getLogger", mock_logger)
+        return Collector(*args, **kwargs)
 
     return _daemon
 
@@ -104,13 +329,16 @@ def mock_gauge():
         def set(self, value):
             self.values.append(value)
 
+        def remove(self, *labelvalues):
+            self.values = []
+
     return TestArgs()
 
 
 @pytest.fixture
 def stats_gauge(monkeypatch, mock_gauge):
     """Mock Gauge calls for the collector module path."""
-    monkeypatch.setattr("prometheus_juju_exporter.collector.Gauge", mock_gauge)
+    monkeypatch.setattr("prometheus_juju_exporter.exporter.Gauge", mock_gauge)
     gauge = mock_gauge
 
     return gauge
