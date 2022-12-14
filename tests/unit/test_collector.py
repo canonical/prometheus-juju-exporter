@@ -139,12 +139,7 @@ class TestCollectorDaemon:
         """Test _get_models for getting a list of all models under a controller."""
         statsd = collector_daemon()
 
-        uuid = await statsd._get_models(
-            endpoint=statsd.config["juju"]["controller_endpoint"].get(),
-            username=statsd.config["juju"]["username"].get(),
-            password=statsd.config["juju"]["password"].get(),
-            cacert=statsd.config["juju"]["controller_cacert"].get(),
-        )
+        uuid = await statsd._get_models()  # pylint disable=W0212
 
         assert uuid == {
             "controller": "65f76aed-789f-4dbf-a75a-a32e5d90ab7e",

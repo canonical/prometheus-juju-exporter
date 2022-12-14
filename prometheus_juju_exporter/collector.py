@@ -1,5 +1,7 @@
+"""Collector module."""
 from enum import Enum
 from logging import getLogger
+from typing import Any, Dict, List
 
 from juju.controller import Controller
 
@@ -7,6 +9,8 @@ from prometheus_juju_exporter.config import Config
 
 
 class MachineType(Enum):
+    """String type enum for selecting available machine types."""
+
     METAL = "metal"
     KVM = "kvm"
     LXD = "lxd"
@@ -15,14 +19,14 @@ class MachineType(Enum):
 class Collector:
     """Core class of the PrometheusJujuExporter collector."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create new collector and configure runtime environment."""
         self.config = Config().get_config()
         self.logger = getLogger(__name__)
         self.controller = Controller(max_frame_size=6**24)
-        self.data = {}
-        self.currently_cached_labels = {}
-        self.previously_cached_labels = {}
+        self.data: Dict[str, Any] = {}
+        self.currently_cached_labels: Dict[str, Any] = {}
+        self.previously_cached_labels: Dict[str, Any] = {}
         self.logger.debug("Collector initialized")
         self.prefixes = [
             "52:54:00",
@@ -33,7 +37,9 @@ class Collector:
             "fa:16:3e",
         ]
 
-    def refresh_cache(self, gauge_name, gauge_desc, labels):
+    def refresh_cache(
+        self, gauge_name: str, gauge_desc: str, labels: List[str]
+    ) -> None:
         """Refresh instances for each collection job.
 
         :param str gauge_name: the name of the gauge
@@ -50,11 +56,13 @@ class Collector:
         }
 
         self.previously_cached_labels = self.currently_cached_labels.copy()
-        self.currently_cached_labels = dict()
+        self.currently_cached_labels = {}
 
         self.controller = Controller(max_frame_size=6**24)
 
-    async def _connect_controller(self, endpoint, username, password, cacert):
+    async def _connect_controller(
+        self, endpoint: str, username: str, password: str, cacert: str
+    ) -> None:
         """Connect to a controller via its endpoint.
 
         :param str endpoint: the hostname:port endpoint of the controller
@@ -69,22 +77,16 @@ class Collector:
                 endpoint=endpoint, username=username, password=password, cacert=cacert
             )
 
-    async def _get_models(self, endpoint, username, password, cacert):
+    async def _get_models(self) -> Dict[str, str]:
         """Get a list of all models under a controller.
 
-        :param str endpoint: the hostname:port endpoint of the controller
-            to connect to.
-        :param str username: the username for controller-local users
-        :param str password: the password for controller-local users
-        :param str cacert: the CA certificate of the controller
-            (PEM formatted)
         :return: str model_uuids: the uuids of all models under the controller
         """
         model_uuids = await self.controller.model_uuids()
 
         return model_uuids
 
-    async def _get_machines_in_model(self, uuid):
+    async def _get_machines_in_model(self, uuid: str) -> Dict[Any, Any]:
         """Get a list of all machines in the model with their stats.
 
         :return: status information for all machines in the model
@@ -94,7 +96,9 @@ class Collector:
 
         return status["machines"]
 
-    def _create_gauge_label(self, hostname, model_name, machine_type):
+    def _create_gauge_label(
+        self, hostname: str, model_name: str, machine_type: str
+    ) -> Dict[str, str]:
         """Create label dict for gauge.
 
         :param str hostname: the hostnameof the machine
@@ -112,7 +116,7 @@ class Collector:
         }
 
     @staticmethod
-    def _get_gauge_value(status):
+    def _get_gauge_value(status: str) -> int:
         """Get numerical value for the running status.
 
         :param str status: the running status of the machine
@@ -121,7 +125,7 @@ class Collector:
         """
         return int(status == "started")
 
-    def _get_labels_to_remove(self, gauge_name):
+    def _get_labels_to_remove(self, gauge_name: str) -> None:
         """Get a list of labelvalues for removed machines."""
         stale_labels = {
             k: self.previously_cached_labels[k]
@@ -132,7 +136,9 @@ class Collector:
         for label in stale_labels.values():
             self.data[gauge_name]["labelvalues_remove"].append(list(label[0].values()))
 
-    async def _get_machine_stats(self, machines, model_name, gauge_name):
+    async def _get_machine_stats(
+        self, machines: Dict, model_name: str, gauge_name: str
+    ) -> None:
         """Get baremetal or vm machines' stats.
 
         :param dict machines: status information for all machines in the model
@@ -172,7 +178,9 @@ class Collector:
                 gauge_name=gauge_name,
             )
 
-    def _get_container_status(self, containers, model_name, gauge_name):
+    def _get_container_status(
+        self, containers: Dict, model_name: str, gauge_name: str
+    ) -> None:
         """Get lxd containers stats.
 
         :param dict containers: status information for all containers on a machine
@@ -195,7 +203,7 @@ class Collector:
                 )
                 self.data[gauge_name]["labelvalues_update"].append((labels, value))
 
-    async def get_stats(self):
+    async def get_stats(self) -> Dict[str, Any]:
         """Get stats from all machines."""
         gauge_name = "juju_machine_state"
         gauge_desc = "Running status of juju machines"
@@ -218,9 +226,7 @@ class Collector:
             await self._connect_controller(
                 endpoint=endpoint, username=username, password=password, cacert=cacert
             )
-            model_uuids = await self._get_models(
-                endpoint=endpoint, username=username, password=password, cacert=cacert
-            )
+            model_uuids = await self._get_models()
             self.logger.debug("List of models in controller: %s", model_uuids)
 
             for name, uuid_ in model_uuids.items():

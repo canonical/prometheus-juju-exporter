@@ -1,16 +1,18 @@
 """Configuration loader."""
+import sys
 from collections import OrderedDict
 from logging import getLogger
+from typing import Dict, Union
 
 import confuse
 
-config = None
+CONFIG = None
 
 
 class Config:
     """Configuration for PrometheusJujuExporter."""
 
-    def __init__(self, args=None):
+    def __init__(self, args: Union[Dict, None] = None) -> None:
         """Initialize the config class."""
         self.logger = getLogger(__name__)
 
@@ -20,16 +22,16 @@ class Config:
         self.validate_config_options()
 
     @property
-    def config(self):
+    def config(self) -> confuse.Configuration:
         """Return the configuration parsed from the config file."""
-        global config
+        global CONFIG  # pylint: disable=W0603
 
-        if config is None:
-            config = confuse.Configuration("PrometheusJujuExporter", __name__)
+        if CONFIG is None:
+            CONFIG = confuse.Configuration("PrometheusJujuExporter", __name__)
 
-        return config
+        return CONFIG
 
-    def validate_config_options(self):
+    def validate_config_options(self) -> None:
         """Validate the configuration values against a template."""
         template = {
             "exporter": OrderedDict(
@@ -57,11 +59,11 @@ class Config:
             confuse.ConfigTypeError,
             confuse.ConfigValueError,
             confuse.NotFoundError,
-        ) as e:
-            self.logger.error("Error parsing configuration values: %s", e)
-            exit(1)
+        ) as err:
+            self.logger.error("Error parsing configuration values: %s", err)
+            sys.exit(1)
 
-    def get_config(self, section=None):
+    def get_config(self, section: Union[Dict, None] = None) -> confuse.Configuration:
         """Return the config."""
         if section:
             return self.config[section]
