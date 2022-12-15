@@ -6,8 +6,11 @@ from time import sleep
 
 import juju_wait
 
-COLLECTION_INTERVAL = 60
 PORT = 5000
+COLLECTION_INTERVAL = 60
+MAX_RETRY_COUNT = 10
+CONNECTION_TIMEOUT_IN_SECONDS = 10
+WAIT_BETWEEN_CONNECTION_IN_SECONDS = 10
 
 
 def get_registry_data():
@@ -18,12 +21,14 @@ def get_registry_data():
 
     # Make sure the registry_data is accessible and collection process
     # is complete (no more labelvalues added to registry)
-    while connection_retry < 10 and (
+    while connection_retry < MAX_RETRY_COUNT and (
         registry_data is None or registry_data != previous_registry_data
     ):
         try:
             previous_registry_data = registry_data
-            localhost = urllib.request.urlopen(f"http://localhost:{PORT}/", timeout=60)
+            localhost = urllib.request.urlopen(
+                f"http://localhost:{PORT}/", timeout=CONNECTION_TIMEOUT_IN_SECONDS
+            )
             sleep(COLLECTION_INTERVAL)
             registry_data = localhost.read()
             localhost.close()
@@ -34,7 +39,7 @@ def get_registry_data():
                 connection_retry,
                 e,
             )
-            sleep(10)
+            sleep(WAIT_BETWEEN_CONNECTION_IN_SECONDS)
 
     return registry_data
 
@@ -50,32 +55,38 @@ def get_juju_models():
     return model_names
 
 
+def get_machines_in_model(machines):
+    """Parse machine stats to get machine counts under a model."""
+    ups = 0
+    downs = 0
+
+    for machine in machines["machines"].values():
+        active = int(machine["juju-status"]["current"] == "started")
+        ups += active
+        downs += 1 - active
+
+        if "containers" in machine.keys():
+            for container in machine["containers"].values():
+                active = int(container["juju-status"]["current"] == "started")
+                ups += active
+                downs += 1 - active
+
+    return ups, downs
+
+
 def get_machines_counts():
     """Get the number of active and inactive machines under the current controller."""
-
-    def _get_state(node, machine_counts):
-        if node["juju-status"]["current"] == "started":
-            machine_counts["up"] += 1
-        else:
-            machine_counts["down"] += 1
-
     models = get_juju_models()
     machine_counts = {"up": 0, "down": 0}
+
     for model in models:
-        machiens_output = check_output(
+        machines_output = check_output(
             f"juju machines -m {model} --format json".split()
         ).decode()
-        machines = json.loads(machiens_output)
-
-        for machine in machines["machines"].keys():
-            _get_state(machines["machines"][machine], machine_counts)
-
-            if "containers" in machines["machines"][machine].keys():
-                for container in machines["machines"][machine]["containers"].keys():
-                    _get_state(
-                        machines["machines"][machine]["containers"][container],
-                        machine_counts,
-                    )
+        machines = json.loads(machines_output)
+        model_ups, model_downs = get_machines_in_model(machines)
+        machine_counts["up"] += model_ups
+        machine_counts["down"] += model_downs
 
     return machine_counts
 

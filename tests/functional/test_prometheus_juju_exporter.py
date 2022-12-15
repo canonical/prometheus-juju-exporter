@@ -22,28 +22,30 @@ def test_connect_registry():
 
 
 def test_machine_counts():
-    """Test if the snap correct recports total, active, and inactive machine counts."""
+    """Test if the snap correct reports total, active, and inactive machine counts."""
     machine_count = get_machines_counts()
     registry_data = get_registry_data()
     machines = [
-        i for i in registry_data.decode().strip().splitlines() if not i.startswith("#")
+        machine
+        for machine in registry_data.decode().strip().splitlines()
+        if not machine.startswith("#")
     ]
     assert len(machines) == sum(machine_count.values())
 
-    up_machines = [i for i in machines if i.endswith("1.0")]
+    up_machines = [machine for machine in machines if machine.endswith("1.0")]
     assert len(up_machines) == machine_count["up"]
 
-    down_machines = [i for i in machines if i.endswith("0.0")]
+    down_machines = [machine for machine in machines if machine.endswith("0.0")]
     assert len(down_machines) == machine_count["down"]
 
 
-def test_add_machine():
-    """Test if the snap correctly recports machine counts when adding a machine."""
+def test_add_machine(setup_test_model):
+    """Test if the snap correctly reports machine counts when adding a machine."""
     current_registry_data = get_registry_data()
     current_machines = [
-        i
-        for i in current_registry_data.decode().strip().splitlines()
-        if not i.startswith("#")
+        machine
+        for machine in current_registry_data.decode().strip().splitlines()
+        if not machine.startswith("#")
     ]
 
     # Add a machine to test model
@@ -51,22 +53,25 @@ def test_add_machine():
 
     new_registry_data = get_registry_data()
     new_machines = [
-        i
-        for i in new_registry_data.decode().strip().splitlines()
-        if not i.startswith("#")
+        machine
+        for machine in new_registry_data.decode().strip().splitlines()
+        if not machine.startswith("#")
     ]
     target_count = len(current_machines) + 1
 
     assert len(new_machines) == target_count
 
 
-def test_remove_machine():
-    """Test if the snap correctly recports machine counts when removing a machine."""
+def test_remove_machine(setup_test_model):
+    """Test if the snap correctly reports machine counts when removing a machine."""
+    # Add a machine to test model
+    add_machine()
+
     current_registry_data = get_registry_data()
     current_machines = [
-        i
-        for i in current_registry_data.decode().strip().splitlines()
-        if not i.startswith("#")
+        machine
+        for machine in current_registry_data.decode().strip().splitlines()
+        if not machine.startswith("#")
     ]
 
     # Remove a machine from test model
@@ -74,9 +79,9 @@ def test_remove_machine():
 
     new_registry_data = get_registry_data()
     new_machines = [
-        i
-        for i in new_registry_data.decode().strip().splitlines()
-        if not i.startswith("#")
+        machine
+        for machine in new_registry_data.decode().strip().splitlines()
+        if not machine.startswith("#")
     ]
     target_count = len(current_machines) - 1
 

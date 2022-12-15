@@ -29,16 +29,16 @@ def get_juju_data():
             assert current_controller is not None
             assert cacert is not None
             assert endpoint is not None
-        except yaml.YAMLError as e:
-            logging.error(e)
+        except yaml.YAMLError as err:
+            logging.error(err)
 
     with open(juju_account_file) as account_file:
         try:
             account_data = yaml.safe_load(account_file)
             user = account_data["controllers"][current_controller]["user"]
             password = account_data["controllers"][current_controller]["password"]
-        except yaml.YAMLError as e:
-            logging.error(e)
+        except yaml.YAMLError as err:
+            logging.error(err)
 
     return user, password, cacert, endpoint
 
@@ -128,7 +128,7 @@ def setup_snap():
         check_call(f"sudo snap remove {SNAP_NAME}".split())
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def setup_test_model():
     """Create a test model for machine manipulation."""
     test_model_name = "prometheus-juju-exporter-func-test"
