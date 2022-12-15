@@ -1,0 +1,3 @@
+juju-wait
+PyYAML
+pytest
