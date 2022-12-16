@@ -10,3 +10,4 @@ report/
 local_config.yaml
 .coverage
 coverage.xml
+.mypy_cache
