@@ -1,5 +1,7 @@
-import asyncio
+import json
+import subprocess
 from logging import getLogger
+from time import sleep
 
 from prometheus_client import CollectorRegistry, Gauge, start_http_server
 
@@ -56,8 +58,8 @@ class ExporterDaemon:
                 )
                 self.metrics[gauge_name].remove(*labels)
 
-    async def trigger(self, **kwargs):
-        """Call Collector and configure prometheus_client gauges from generated stats.
+    def trigger(self, **kwargs):
+        """Collect data from controller and configure prometheus_client gauges from generated stats.
 
         Available parameters are:
 
@@ -65,18 +67,25 @@ class ExporterDaemon:
             to true, trigger function will only run once.
         """
         run_collector = True
+        collector_cmd = "prometheus-juju-exporter collect".split()
 
         while run_collector:
             try:
                 self.logger.info("Collecting gauges...")
-                data = await self.collector.get_stats()
+                raw_data = subprocess.check_output(
+                    collector_cmd, stderr=subprocess.STDOUT
+                )
+                data = json.loads(raw_data)
                 self.update_registry(data)
                 self.logger.info("Gauges collected and ready for exporting.")
-                await asyncio.sleep(
-                    self.config["exporter"]["collect_interval"].get(int) * 60
+                sleep(self.config["exporter"]["collect_interval"].get(int) * 60)
+            except Exception as exc:
+                err = (
+                    exc.output
+                    if isinstance(exc, subprocess.CalledProcessError)
+                    else str(exc)
                 )
-            except Exception as e:
-                self.logger.error("Collection job resulted in error: %s", e)
+                self.logger.error("Collection job resulted in error: %s", err)
                 exit(1)
 
             # run collector only once if in test mode
@@ -97,6 +106,4 @@ class ExporterDaemon:
             registry=self._registry,
         )
 
-        loop = asyncio.get_event_loop()
-        task = asyncio.ensure_future(self.trigger(**kwargs))
-        loop.run_until_complete(asyncio.wait([task]))
+        self.trigger(**kwargs)

@@ -51,7 +51,7 @@ class Config:
 
         try:
             self.config.get(template)
-            self.logger.info("Configuration parsed successfully")
+            self.logger.debug("Configuration parsed successfully")
         except (
             KeyError,
             confuse.ConfigTypeError,

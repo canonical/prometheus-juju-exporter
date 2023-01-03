@@ -1,6 +1,10 @@
 import argparse
+import asyncio
+import json
+import logging
 
 from prometheus_juju_exporter import logger as project_logger
+from prometheus_juju_exporter.collector import Collector
 from prometheus_juju_exporter.exporter import ExporterDaemon
 
 
@@ -9,14 +13,44 @@ def config_logger(debug=False):
 
     :param bool debug: Whether to set logging level to debug
     """
-    project_logger.setLevel("DEBUG" if debug else "INFO")
+    if debug:
+        project_logger.setLevel(logging.DEBUG)
+    else:
+        project_logger.setLevel(logging.INFO)
+        # prevent logs from imported libraries from bubbling up. Specially libjuju
+        # can be very verbose
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.ERROR)
 
 
-def main(args=None):
-    """Program entry point.
+def collect(pretty: bool = False) -> None:
+    """Run 'collect' subcommand.
 
-    Parse cli arguments and start exporter daemon.
+    This subcommand collects data from controller and outputs them to the STDOUT in
+    the form of a json.
+
+    :param pretty: If True, the output in STDOUT will be indented for easier reading.
     """
+    collector = Collector()
+    indent = 2 if pretty else None
+
+    loop = asyncio.get_event_loop()
+    task = asyncio.ensure_future(collector.get_stats())
+    loop.run_until_complete(asyncio.wait([task]))
+
+    print(json.dumps(task.result(), indent=indent))
+
+
+def export() -> None:
+    """Run 'export' subcommand.
+
+    This subcommand runs the Prometheus exporter and continuously updates its data.
+    """
+    ExporterDaemon().run()
+
+
+def parse_cli_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     cli = argparse.ArgumentParser(
         prog="prometheus-juju-exporter",
         description="PrometheusJujuExporter CLI",
@@ -26,11 +60,42 @@ def main(args=None):
         "-d", "--debug", dest="debug", action="store_true", help="Print debug log"
     )
 
-    parser, unknown = cli.parse_known_args(args)
-    config_logger(debug=parser.debug)
+    subcommands = cli.add_subparsers(
+        dest="cmd", title="commands", help="available commands", required=True
+    )
 
-    obj = ExporterDaemon()
-    obj.run()
+    collect_cli = subcommands.add_parser(
+        "collect", help="Collect and print metrics from controller."
+    )
+    collect_cli.add_argument(
+        "-p",
+        "--pretty",
+        action="store_true",
+        default=False,
+        help="Indent output for easier reading",
+        dest="pretty",
+    )
+
+    subcommands.add_parser("export", help="Run Prometheus exporter")
+
+    return cli.parse_args()
+
+
+def main():
+    """Program entry point.
+
+    Parse cli arguments and execute selected subcommand.
+    """
+    args = parse_cli_args()
+    config_logger(debug=args.debug)
+
+    if args.cmd == "collect":
+        collect(args.pretty)
+    elif args.cmd == "export":
+        export()
+    else:
+        print(f"Subcommand '{args.cmd}' not implemented")
+        exit(1)
 
 
 if __name__ == "__main__":  # pragma: no cover
