@@ -72,16 +72,14 @@ class ExporterDaemon:
         while run_collector:
             try:
                 self.logger.info("Collecting gauges...")
-                raw_data = subprocess.check_output(
-                    collector_cmd, stderr=subprocess.STDOUT
-                )
+                raw_data = subprocess.check_output(collector_cmd)
                 data = json.loads(raw_data)
                 self.update_registry(data)
                 self.logger.info("Gauges collected and ready for exporting.")
                 sleep(self.config["exporter"]["collect_interval"].get(int) * 60)
             except Exception as exc:
                 err = (
-                    exc.output
+                    exc.output + exc.stderr
                     if isinstance(exc, subprocess.CalledProcessError)
                     else str(exc)
                 )
