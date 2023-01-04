@@ -34,11 +34,9 @@ def collect(pretty: bool = False) -> None:
     collector = Collector()
     indent = 2 if pretty else None
 
-    loop = asyncio.get_event_loop()
-    task = asyncio.ensure_future(collector.get_stats())
-    loop.run_until_complete(asyncio.wait([task]))
+    result = asyncio.run(collector.get_stats())
 
-    print(json.dumps(task.result(), indent=indent))
+    print(json.dumps(result, indent=indent))
 
 
 def export() -> None:
