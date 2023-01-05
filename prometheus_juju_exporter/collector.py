@@ -91,6 +91,7 @@ class Collector:
         """
         model = await self.controller.get_model(uuid)
         status = await model.get_status()
+        await model.disconnect()
 
         return status["machines"]
 
