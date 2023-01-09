@@ -29,7 +29,6 @@ class Config(metaclass=ConfigMeta):
     def __init__(self, args: Union[Dict, None] = None) -> None:
         """Initialize the config class."""
         if not self.config:
-            print("Once")
             self.config = confuse.Configuration("PrometheusJujuExporter", __name__)
 
         self.logger = getLogger(__name__)

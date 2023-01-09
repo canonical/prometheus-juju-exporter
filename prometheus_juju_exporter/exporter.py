@@ -102,6 +102,4 @@ class ExporterDaemon:
             registry=self._registry,
         )
 
-        loop = asyncio.get_event_loop()
-        task = asyncio.ensure_future(self.trigger(**kwargs))
-        loop.run_until_complete(asyncio.wait([task]))
+        asyncio.run(self.trigger(**kwargs))

@@ -77,15 +77,6 @@ class Collector:
                 endpoint=endpoint, username=username, password=password, cacert=cacert
             )
 
-    async def _get_models(self) -> Dict[str, str]:
-        """Get a list of all models under a controller.
-
-        :return: str model_uuids: the uuids of all models under the controller
-        """
-        model_uuids = await self.controller.model_uuids()
-
-        return model_uuids
-
     async def _get_machines_in_model(self, uuid: str) -> Dict[Any, Any]:
         """Get a list of all machines in the model with their stats.
 
@@ -226,7 +217,7 @@ class Collector:
             await self._connect_controller(
                 endpoint=endpoint, username=username, password=password, cacert=cacert
             )
-            model_uuids = await self._get_models()
+            model_uuids = await self.controller.model_uuids()
             self.logger.debug("List of models in controller: %s", model_uuids)
 
             for name, uuid_ in model_uuids.items():
