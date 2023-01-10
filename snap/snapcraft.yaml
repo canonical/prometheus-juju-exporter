@@ -7,7 +7,7 @@ description: |
   Collects juju machine status metrics periodically.
   Provides a prometheus exporter interface exposing the collected metrics.
 
-grade: devel
+grade: stable
 confinement: strict
 
 apps:
