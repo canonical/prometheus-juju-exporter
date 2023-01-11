@@ -5,7 +5,7 @@ from subprocess import check_call, check_output
 import pytest
 import yaml
 
-JUJU_CRED_DIR = "/home/ubuntu/.local/share/juju/"
+JUJU_CRED_DIR = ".local/share/juju/"
 SNAP_CONFIG_DIR = "/var/snap/prometheus-juju-exporter/"
 TMP_DIR = "/tmp"
 SNAP_NAME = "prometheus-juju-exporter"
@@ -13,8 +13,8 @@ SNAP_NAME = "prometheus-juju-exporter"
 
 def get_juju_data():
     """Get juju account data and credentials."""
-    juju_controller_file = os.path.join(JUJU_CRED_DIR, "controllers.yaml")
-    juju_account_file = os.path.join(JUJU_CRED_DIR, "accounts.yaml")
+    juju_controller_file = os.path.join(os.path.expanduser("~"), JUJU_CRED_DIR, "controllers.yaml")
+    juju_account_file = os.path.join(os.path.expanduser("~"), JUJU_CRED_DIR, "accounts.yaml")
     assert os.path.isfile(juju_controller_file)
     assert os.path.isfile(juju_account_file)
 
