@@ -2,11 +2,11 @@
 
 from setuptools import setup
 
-with open("README.md") as f:
+with open("README.md", encoding="utf-8") as f:
     readme = f.read()
 
-with open("LICENSE") as f:
-    license = f.read()
+with open("LICENSE", encoding="utf-8") as f:
+    project_license = f.read()
 
 setup(
     name="prometheus_juju_exporter",
@@ -15,7 +15,7 @@ setup(
     long_description=readme,
     author="Canonical BootStack DevOps Centres",
     url="https://github.com/canonical/prometheus-juju-exporter",
-    license=license,
+    license=project_license,
     packages=["prometheus_juju_exporter"],
     package_data={"prometheus_juju_exporter": ["config_default.yaml"]},
     entry_points={

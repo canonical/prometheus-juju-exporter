@@ -2,7 +2,7 @@
 """Pytest fixture definitions."""
 
 import os
-import unittest.mock as mock
+from unittest import mock
 
 import pytest
 from juju.controller import Controller
@@ -19,7 +19,6 @@ def get_model_list_data():
     mock_model_list.return_value = {
         "controller": "65f76aed-789f-4dbf-a75a-a32e5d90ab7e",
         "default": "77643b91-a6f8-4cf6-8755-83c6becd09bb",
-        "test": "68c4cc81-9b3d-44a2-a419-d25dfb9d5588",
     }
 
     return mock_model_list
@@ -31,7 +30,7 @@ def get_juju_stats_data():
 
     mock_stats.return_value = {
         "model": {
-            "name": "test",
+            "name": "",
             "type": "iaas",
             "controller": "test-cloud-local",
             "cloud": "test-cloud",
@@ -215,8 +214,10 @@ def config_instance(monkeypatch):
 
     def _config(args=""):
         # Clear global
-        monkeypatch.setattr("prometheus_juju_exporter.config.config", None)
-
+        monkeypatch.setattr(
+            "prometheus_juju_exporter.config.Config.config",
+            None,
+        )
         mock_set_args = mock.MagicMock()
         monkeypatch.setattr(
             "prometheus_juju_exporter.config.confuse.Configuration.set_args",
@@ -249,7 +250,7 @@ def mock_controller_connection(monkeypatch, mock_model_connection):
 
 
 @pytest.fixture
-def mock_model_connection(monkeypatch):
+def mock_model_connection():
     """Mock juju model for the collector module path."""
     mock_model = Model
     mock_model.get_status = get_juju_stats_data()
@@ -272,7 +273,6 @@ def exporter_daemon(monkeypatch, stats_gauge):
         mock_logger.return_value = mock_logger
         mock_logger.handlers = None
 
-        monkeypatch.setattr("prometheus_juju_exporter.config.config", None)
         monkeypatch.setattr(
             "prometheus_juju_exporter.exporter.start_http_server", mock_http_server
         )
@@ -292,16 +292,15 @@ def collector_daemon(monkeypatch, mock_model_connection, mock_controller_connect
     """Mock collector."""
     from prometheus_juju_exporter.collector import Collector
 
-    def _daemon(*args, **kwargs):
+    def _collector(*args, **kwargs):
         # Clear global
-        monkeypatch.setattr("prometheus_juju_exporter.config.config", None)
         mock_logger = mock.MagicMock()
         mock_logger.return_value = mock_logger
         mock_logger.handlers = None
         monkeypatch.setattr("prometheus_juju_exporter.logging.getLogger", mock_logger)
         return Collector(*args, **kwargs)
 
-    return _daemon
+    return _collector
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Test Config class."""
-import unittest.mock as mock
+from unittest import mock
 
 import pytest
 
@@ -37,7 +37,7 @@ class TestConfig:
         config_ins = config_instance()
 
         # Test valid config values in config.yaml file
-        with mock.patch("prometheus_juju_exporter.config.exit") as exit_call:
+        with mock.patch("prometheus_juju_exporter.config.sys.exit") as exit_call:
             config_ins.validate_config_options()
             exit_call.assert_not_called()
 
@@ -48,7 +48,7 @@ class TestConfig:
 
         # Test bad config values
         config_ins.config["exporter"]["port"].set(port_value)
-        with mock.patch("prometheus_juju_exporter.config.exit") as exit_call:
+        with mock.patch("prometheus_juju_exporter.config.sys.exit") as exit_call:
             config_ins.validate_config_options()
             assert config_ins.config["exporter"]["port"].get() == port_value
             exit_call.assert_called_once()

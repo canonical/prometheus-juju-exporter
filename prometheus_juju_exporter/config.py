@@ -1,17 +1,36 @@
 """Configuration loader."""
+import sys
 from collections import OrderedDict
 from logging import getLogger
+from typing import Any, Dict, Union
 
 import confuse
 
-config = None
+
+class ConfigMeta(type):
+    """Singleton metaclass for the Config."""
+
+    _instance = None
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> type:
+        if not cls._instance:
+            cls._instance = super(ConfigMeta, cls).__new__(cls, *args, **kwargs)
+            cls._instance.config = confuse.Configuration(
+                "PrometheusJujuExporter", __name__
+            )
+        return cls._instance
 
 
-class Config:
-    """Configuration for PrometheusJujuExporter."""
+class Config(metaclass=ConfigMeta):
+    """Configuration class for PrometheusJujuExporter."""
 
-    def __init__(self, args=None):
+    config: confuse.Configuration = None
+
+    def __init__(self, args: Union[Dict, None] = None) -> None:
         """Initialize the config class."""
+        if not self.config:
+            self.config = confuse.Configuration("PrometheusJujuExporter", __name__)
+
         self.logger = getLogger(__name__)
 
         if args:
@@ -19,17 +38,7 @@ class Config:
 
         self.validate_config_options()
 
-    @property
-    def config(self):
-        """Return the configuration parsed from the config file."""
-        global config
-
-        if config is None:
-            config = confuse.Configuration("PrometheusJujuExporter", __name__)
-
-        return config
-
-    def validate_config_options(self):
+    def validate_config_options(self) -> None:
         """Validate the configuration values against a template."""
         template = {
             "exporter": OrderedDict(
@@ -57,11 +66,11 @@ class Config:
             confuse.ConfigTypeError,
             confuse.ConfigValueError,
             confuse.NotFoundError,
-        ) as e:
-            self.logger.error("Error parsing configuration values: %s", e)
-            exit(1)
+        ) as err:
+            self.logger.error("Error parsing configuration values: %s", err)
+            sys.exit(1)
 
-    def get_config(self, section=None):
+    def get_config(self, section: Union[Dict, None] = None) -> confuse.Configuration:
         """Return the config."""
         if section:
             return self.config[section]

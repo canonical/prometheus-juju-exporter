@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Test Cli."""
-import unittest.mock as mock
+from unittest import mock
 
 import pytest
 
@@ -18,9 +18,9 @@ class TestCli:
             "prometheus_juju_exporter.cli.ExporterDaemon", mock_exporter
         )
 
-        with mock.patch("prometheus_juju_exporter.cli.config_logger") as config_logger:
+        with mock.patch("prometheus_juju_exporter.cli.config_logger") as logging_config:
             main([option])
-            config_logger.assert_called_once_with(debug=True)
+            logging_config.assert_called_once_with(debug=True)
             mock_exporter.assert_called_once()
 
     @pytest.mark.parametrize(

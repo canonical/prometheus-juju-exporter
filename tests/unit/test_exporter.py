@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Test exporter daemon."""
-import unittest.mock as mock
+from unittest import mock
 
 import pytest
 
@@ -41,7 +41,7 @@ class TestExporterDaemon:
             "prometheus_juju_exporter.collector.Collector.get_stats",
             side_effect=Exception("mocked error"),
         ):
-            with mock.patch("prometheus_juju_exporter.exporter.exit") as exit_call:
+            with mock.patch("prometheus_juju_exporter.exporter.sys.exit") as exit_call:
                 await statsd.trigger(once=True)
                 exit_call.assert_called_once()
 
