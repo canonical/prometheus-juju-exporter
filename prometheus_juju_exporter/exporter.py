@@ -61,17 +61,11 @@ class ExporterDaemon:
                 )
                 self.metrics[gauge_name].remove(*labels)
 
-    async def trigger(self, **kwargs: Any) -> None:
-        """Call Collector and configure prometheus_client gauges from generated stats.
-
-        Available parameters are:
-
-        :param bool once: Whether to continuously collect data. If set
-            to true, trigger function will only run once.
-        """
-        run_collector = True
-
-        while run_collector:
+    async def trigger(
+        self,
+    ) -> None:
+        """Call Collector and configure prometheus_client gauges from generated stats."""
+        while True:
             try:
                 self.logger.info("Collecting gauges...")
                 data = await self.collector.get_stats()
@@ -84,22 +78,17 @@ class ExporterDaemon:
                 self.logger.error("Collection job resulted in error: %s", err)
                 sys.exit(1)
 
-            # run collector only once if in test mode
-            if kwargs.get("once"):
-                run_collector = False
-
-    def run(self, **kwargs: Any) -> None:
-        """Run exporter.
-
-        Available parameters are:
-
-        :param bool once: Whether to run exporter daemon continuously. If set
-            to true, trigger function will only run once.
-        """
+    def run(self) -> None:
+        """Run exporter."""
         self.logger.debug("Running prometheus client http server.")
         start_http_server(
             self.config["exporter"]["port"].get(int),
             registry=self._registry,
         )
 
-        asyncio.run(self.trigger(**kwargs))
+        try:
+            asyncio.run(self.trigger())
+        except KeyboardInterrupt as err:
+            # Gracefully handle keyboard interrupt
+            self.logger.info("%s: Exiting...", err)
+            sys.exit(0)

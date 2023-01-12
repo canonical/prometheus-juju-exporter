@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize, reopened]
 jobs:
   citest:
-    name: CI Test
+    name: Lint and Unittests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
