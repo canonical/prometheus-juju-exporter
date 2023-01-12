@@ -61,9 +61,7 @@ class ExporterDaemon:
                 )
                 self.metrics[gauge_name].remove(*labels)
 
-    async def trigger(
-        self,
-    ) -> None:
+    async def trigger(self) -> None:
         """Call Collector and configure prometheus_client gauges from generated stats."""
         while True:
             try:
