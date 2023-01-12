@@ -13,8 +13,12 @@ SNAP_NAME = "prometheus-juju-exporter"
 
 def get_juju_data():
     """Get juju account data and credentials."""
-    juju_controller_file = os.path.join(os.path.expanduser("~"), JUJU_CRED_DIR, "controllers.yaml")
-    juju_account_file = os.path.join(os.path.expanduser("~"), JUJU_CRED_DIR, "accounts.yaml")
+    juju_controller_file = os.path.join(
+        os.path.expanduser("~"), JUJU_CRED_DIR, "controllers.yaml"
+    )
+    juju_account_file = os.path.join(
+        os.path.expanduser("~"), JUJU_CRED_DIR, "accounts.yaml"
+    )
     assert os.path.isfile(juju_controller_file)
     assert os.path.isfile(juju_account_file)
 
