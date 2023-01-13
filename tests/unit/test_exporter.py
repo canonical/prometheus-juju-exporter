@@ -31,9 +31,8 @@ class TestExporterDaemon:
         with mock.patch(
             "prometheus_juju_exporter.exporter.asyncio.sleep",
             side_effect=Exception,
-        ):
-            with pytest.raises(SystemExit) as exit_call:
-                await statsd.trigger()
+        ), pytest.raises(SystemExit) as exit_call:
+            await statsd.trigger()
 
         statsd.collector.get_stats.assert_called_once()
         assert "example_gauge" in statsd.metrics.keys()
@@ -48,9 +47,8 @@ class TestExporterDaemon:
         with mock.patch(
             "prometheus_juju_exporter.exporter.ExporterDaemon.trigger",
             side_effect=KeyboardInterrupt,
-        ):
-            with pytest.raises(SystemExit) as exit_call:
-                statsd.run()
+        ), pytest.raises(SystemExit) as exit_call:
+            statsd.run()
 
         assert exit_call.type == SystemExit
         assert exit_call.value.code == 0
