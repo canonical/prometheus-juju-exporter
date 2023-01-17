@@ -28,14 +28,6 @@ class Collector:
         self.currently_cached_labels: Dict[str, Any] = {}
         self.previously_cached_labels: Dict[str, Any] = {}
         self.logger.debug("Collector initialized")
-        self.prefixes = [
-            "52:54:00",
-            "fa:16:3e",
-            "06:f1:3a",
-            "00:0d:3a",
-            "00:50:56",
-            "fa:16:3e",
-        ]
 
     def refresh_cache(
         self, gauge_name: str, gauge_desc: str, labels: List[str]
@@ -137,6 +129,8 @@ class Collector:
         :param str model_name: the name of the model the machines are in
         :param str gauge_name: the name of the gauge
         """
+        virt_mac_prefixes = self.config["machine"]["virt_macs"].get(str).split(",")
+
         for machine in machines.values():
             # check machine type with the prefix of its mac address
             interfaces = machine["network-interfaces"].values()
@@ -144,7 +138,7 @@ class Collector:
 
             for i in interfaces:
                 mac_addresses = i["mac-address"]
-                if mac_addresses.startswith(tuple(self.prefixes)):
+                if mac_addresses.startswith(tuple(virt_mac_prefixes)):
                     machine_type = MachineType.KVM
                     break
 
