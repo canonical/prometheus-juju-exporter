@@ -138,7 +138,10 @@ class Collector:
 
             for i in interfaces:
                 mac_addresses = i["mac-address"]
-                if mac_addresses.startswith(tuple(virt_mac_prefixes)):
+                if (
+                    mac_addresses.startswith(tuple(virt_mac_prefixes))
+                    and virt_mac_prefixes[0] != ""
+                ):
                     machine_type = MachineType.KVM
                     break
 
