@@ -27,26 +27,28 @@ class TestExporterDaemon:
     async def test_trigger(self, exporter_daemon):
         """Test trigger function."""
         statsd = exporter_daemon()
-        await statsd.trigger(once=True)
+
+        with mock.patch(
+            "prometheus_juju_exporter.exporter.asyncio.sleep",
+            side_effect=Exception,
+        ), pytest.raises(SystemExit) as exit_call:
+            await statsd.trigger()
 
         statsd.collector.get_stats.assert_called_once()
         assert "example_gauge" in statsd.metrics.keys()
 
-    @pytest.mark.asyncio
-    async def test_trigger_exception(self, exporter_daemon):
-        """Test exception handling of trigger function."""
-        statsd = exporter_daemon()
-
-        with mock.patch(
-            "prometheus_juju_exporter.collector.Collector.get_stats",
-            side_effect=Exception("mocked error"),
-        ):
-            with mock.patch("prometheus_juju_exporter.exporter.sys.exit") as exit_call:
-                await statsd.trigger(once=True)
-                exit_call.assert_called_once()
+        assert exit_call.type == SystemExit
+        assert exit_call.value.code == 1
 
     def test_run(self, exporter_daemon):
         """Test run function."""
         statsd = exporter_daemon()
-        statsd.run(once=True)
-        statsd.collector.get_stats.assert_called_once()
+
+        with mock.patch(
+            "prometheus_juju_exporter.exporter.ExporterDaemon.trigger",
+            side_effect=KeyboardInterrupt,
+        ), pytest.raises(SystemExit) as exit_call:
+            statsd.run()
+
+        assert exit_call.type == SystemExit
+        assert exit_call.value.code == 0
