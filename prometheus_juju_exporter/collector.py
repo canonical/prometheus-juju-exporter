@@ -129,7 +129,7 @@ class Collector:
         :param str model_name: the name of the model the machines are in
         :param str gauge_name: the name of the gauge
         """
-        virt_mac_prefixes = self.config["machine"]["virt_macs"].get(str).split(",")
+        virt_mac_prefixes = self.config["detection"]["virt_macs"].as_str_seq()
 
         for machine in machines.values():
             # check machine type with the prefix of its mac address
@@ -137,11 +137,8 @@ class Collector:
             machine_type = MachineType.METAL
 
             for i in interfaces:
-                mac_addresses = i["mac-address"]
-                if (
-                    mac_addresses.startswith(tuple(virt_mac_prefixes))
-                    and virt_mac_prefixes[0] != ""
-                ):
+                mac_address = i["mac-address"]
+                if mac_address.startswith(tuple(virt_mac_prefixes)):
                     machine_type = MachineType.KVM
                     break
 

@@ -12,5 +12,10 @@ exporter:
   port: 9748
   collect_interval: 15
 
-machine:
-  virt_macs: "52:54:00,fa:16:3e,06:f1:3a,00:0d:3a,00:50:56,fa:16:3e"
+detection: # parameters affecting the detection algorithm
+  virt_macs: 
+    - "52:54:00"
+    - "fa:16:3e"
+    - "06:f1:3a"
+    - "00:0d:3a" # Microsoft
+    - "00:50:56" # VMware

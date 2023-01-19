@@ -25,10 +25,13 @@ class TestCollectorDaemon:
         assert statsd.config["juju"]["password"].get() == "example_password"
         assert statsd.config["customer"]["name"].get() == "example_customer"
         assert statsd.config["customer"]["cloud_name"].get() == "example_cloud"
-        assert (
-            statsd.config["machine"]["virt_macs"].get()
-            == "52:54:00,fa:16:3e,06:f1:3a,00:0d:3a,00:50:56,fa:16:3e"
-        )
+        assert statsd.config["detection"]["virt_macs"].get() == [
+            "52:54:00",
+            "fa:16:3e",
+            "06:f1:3a",
+            "00:0d:3a",
+            "00:50:56",
+        ]
 
     @pytest.mark.asyncio
     async def test_get_stats(self, collector_daemon):
