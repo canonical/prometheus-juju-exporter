@@ -27,6 +27,7 @@ class Collector:
         self.data: Dict[str, Any] = {}
         self.currently_cached_labels: Dict[str, Any] = {}
         self.previously_cached_labels: Dict[str, Any] = {}
+        self.virt_mac_prefixes = self.config["detection"]["virt_macs"].as_str_seq()
         self.logger.debug("Collector initialized")
 
     def refresh_cache(
@@ -120,6 +121,21 @@ class Collector:
         for label in stale_labels.values():
             self.data[gauge_name]["labelvalues_remove"].append(list(label[0].values()))
 
+    def _get_machine_type(self, machine: Dict) -> MachineType:
+        """Detect machine type based on its MAC address.
+
+        :param dict machine: status information for a machine
+        :return MachineType: MachineType class object indicating the machine type
+        """
+        interfaces = machine["network-interfaces"].values()
+
+        for i in interfaces:
+            mac_address = i["mac-address"]
+            if mac_address.startswith(tuple(self.virt_mac_prefixes)):
+                return MachineType.KVM
+
+        return MachineType.METAL
+
     async def _get_machine_stats(
         self, machines: Dict, model_name: str, gauge_name: str
     ) -> None:
@@ -129,19 +145,8 @@ class Collector:
         :param str model_name: the name of the model the machines are in
         :param str gauge_name: the name of the gauge
         """
-        virt_mac_prefixes = self.config["detection"]["virt_macs"].as_str_seq()
-
         for machine in machines.values():
-            # check machine type with the prefix of its mac address
-            interfaces = machine["network-interfaces"].values()
-            machine_type = MachineType.METAL
-
-            for i in interfaces:
-                mac_address = i["mac-address"]
-                if mac_address.startswith(tuple(virt_mac_prefixes)):
-                    machine_type = MachineType.KVM
-                    break
-
+            machine_type = self._get_machine_type(machine)
             value = self._get_gauge_value(status=machine["agent-status"]["status"])
 
             labels = self._create_gauge_label(
