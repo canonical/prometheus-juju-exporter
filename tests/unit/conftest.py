@@ -115,7 +115,50 @@ def get_juju_stats_data():
                     }
                 },
                 "hardware": "arch=amd64 cores=1 mem=2048M root-disk=20480M availability-zone=nova",
-            }
+            },
+            "1": {
+                "agent-status": {
+                    "status": "started",
+                    "since": "24 Nov 2022 13:21:25Z",
+                    "version": "2.9.29",
+                },
+                "hostname": "juju-000ddd-test-1",
+                "dns-name": "10.5.0.18",
+                "ip-addresses": ["10.5.0.02", "252.0.0.2"],
+                "instance-id": "149e81c8-a05b-4852-9201-434670598c31",
+                "instance-status": {
+                    "status": "running",
+                    "message": "ACTIVE",
+                    "since": "24 Nov 2022 13:20:32Z",
+                },
+                "modification-status": {
+                    "current": "idle",
+                    "since": "24 Nov 2022 13:19:42Z",
+                },
+                "series": "focal",
+                "network-interfaces": {
+                    "ens3": {
+                        "ip-addresses": ["10.5.0.02"],
+                        "mac-address": "00:00:00:d4:00:01",
+                        "gateway": "10.5.0.1",
+                        "space": "alpha",
+                        "is-up": "true",
+                    },
+                    "fan-252": {
+                        "ip-addresses": ["252.0.0.2"],
+                        "mac-address": "9e:fc:ca:87:00:01",
+                        "space": "alpha",
+                        "is-up": "true",
+                    },
+                    "lxdbr0": {
+                        "ip-addresses": ["10.100.00.1"],
+                        "mac-address": "00:16:3e:e1:00:01",
+                        "is-up": "true",
+                    },
+                },
+                "containers": {},
+                "hardware": "arch=amd64 cores=1 mem=2048M root-disk=20480M availability-zone=nova",
+            },
         },
         "applications": {
             "ubuntu": {

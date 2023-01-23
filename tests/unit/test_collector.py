@@ -112,6 +112,17 @@ class TestCollectorDaemon:
                         {
                             "cloud_name": "example_cloud",
                             "customer": "example_customer",
+                            "hostname": "juju-000ddd-test-1",
+                            "job": "prometheus-juju-exporter",
+                            "juju_model": "controller",
+                            "type": "metal",
+                        },
+                        1,
+                    ),
+                    (
+                        {
+                            "cloud_name": "example_cloud",
+                            "customer": "example_customer",
                             "hostname": "juju-000ddd-test-0",
                             "job": "prometheus-juju-exporter",
                             "juju_model": "default",
@@ -130,24 +141,17 @@ class TestCollectorDaemon:
                         },
                         1,
                     ),
+                    (
+                        {
+                            "cloud_name": "example_cloud",
+                            "customer": "example_customer",
+                            "hostname": "juju-000ddd-test-1",
+                            "job": "prometheus-juju-exporter",
+                            "juju_model": "default",
+                            "type": "metal",
+                        },
+                        1,
+                    ),
                 ],
             },
         }
-
-    @pytest.mark.parametrize(
-        "mac_address,expect_machine_type",
-        [("fa:16:3e:d4:00:00", "kvm"), ("00:00:00:00:00:00", "metal")],
-    )
-    def test_get_machine_type(self, collector_daemon, mac_address, expect_machine_type):
-        """Test get_stats function and the execution of the collector."""
-        statsd = collector_daemon()
-        machine = {
-            "network-interfaces": {
-                "ens3": {
-                    "mac-address": mac_address,
-                }
-            }
-        }
-        machine_type = statsd._get_machine_type(machine)
-
-        assert machine_type.value == expect_machine_type
