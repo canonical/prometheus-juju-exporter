@@ -1,7 +1,7 @@
 """Collector module."""
 from enum import Enum
 from logging import getLogger
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from juju.controller import Controller
 
@@ -77,7 +77,7 @@ class Collector:
                 endpoint=endpoint, username=username, password=password, cacert=cacert
             )
 
-    async def _get_machines_in_model(self, uuid: str) -> Optional[Dict[Any, Any]]:
+    async def _get_machines_in_model(self, uuid: str) -> Dict[Any, Any]:
         """Get a list of all machines in the model with their stats.
 
         :return: status information for all machines in the model
@@ -88,7 +88,7 @@ class Collector:
             await model.disconnect()
         except Exception as err:  # pylint: disable=W0703
             self.logger.error("Failed connecting to model '%s': %s ", uuid, err)
-            return None
+            return {}
 
         return status["machines"]
 
@@ -229,10 +229,9 @@ class Collector:
                 self.logger.debug("Checking model '%s'...", name)
                 machines = await self._get_machines_in_model(uuid=uuid_)
 
-                if machines:
-                    await self._get_machine_stats(
-                        machines=machines, model_name=name, gauge_name=gauge_name
-                    )
+                await self._get_machine_stats(
+                    machines=machines, model_name=name, gauge_name=gauge_name
+                )
 
             self._get_labels_to_remove(gauge_name=gauge_name)
         finally:
