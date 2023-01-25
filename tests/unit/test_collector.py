@@ -25,6 +25,13 @@ class TestCollectorDaemon:
         assert statsd.config["juju"]["password"].get() == "example_password"
         assert statsd.config["customer"]["name"].get() == "example_customer"
         assert statsd.config["customer"]["cloud_name"].get() == "example_cloud"
+        assert statsd.config["detection"]["virt_macs"].get() == [
+            "52:54:00",
+            "fa:16:3e",
+            "06:f1:3a",
+            "00:0d:3a",
+            "00:50:56",
+        ]
 
     @pytest.mark.asyncio
     async def test_get_stats(self, collector_daemon):
@@ -126,3 +133,21 @@ class TestCollectorDaemon:
                 ],
             },
         }
+
+    @pytest.mark.parametrize(
+        "mac_address,expect_machine_type",
+        [("fa:16:3e:d4:00:00", "kvm"), ("00:00:00:00:00:00", "metal")],
+    )
+    def test_get_machine_type(self, collector_daemon, mac_address, expect_machine_type):
+        """Test get_stats function and the execution of the collector."""
+        statsd = collector_daemon()
+        machine = {
+            "network-interfaces": {
+                "ens3": {
+                    "mac-address": mac_address,
+                }
+            }
+        }
+        machine_type = statsd._get_machine_type(machine)
+
+        assert machine_type.value == expect_machine_type
