@@ -179,4 +179,3 @@ class TestCollectorDaemon:
         machine_type = statsd._get_machine_type(machine)
 
         assert machine_type.value == expect_machine_type
-
