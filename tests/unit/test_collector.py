@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 """Test collctor."""
+from unittest import mock
+
 import pytest
 
 
@@ -132,6 +134,32 @@ class TestCollectorDaemon:
                     ),
                 ],
             },
+        }
+
+    @pytest.mark.asyncio
+    async def test_skip_inaccessible_models(self, collector_daemon):
+        """Test exception handling in case a model is inaccessible."""
+        statsd = collector_daemon()
+        with mock.patch(
+            "prometheus_juju_exporter.collector.Controller.get_model",
+            side_effect=Exception,
+        ):
+            await statsd.get_stats()
+
+        assert statsd.data == {
+            "juju_machine_state": {
+                "gauge_desc": "Running status of juju machines",
+                "labels": [
+                    "job",
+                    "hostname",
+                    "customer",
+                    "cloud_name",
+                    "juju_model",
+                    "type",
+                ],
+                "labelvalues_remove": [],
+                "labelvalues_update": [],
+            }
         }
 
     @pytest.mark.parametrize(

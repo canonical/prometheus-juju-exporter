@@ -288,7 +288,7 @@ def exporter_daemon(monkeypatch, stats_gauge):
 
 
 @pytest.fixture
-def collector_daemon(monkeypatch, mock_model_connection, mock_controller_connection):
+def collector_daemon(monkeypatch, mock_controller_connection):
     """Mock collector."""
     from prometheus_juju_exporter.collector import Collector
 

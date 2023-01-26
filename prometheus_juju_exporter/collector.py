@@ -75,9 +75,13 @@ class Collector:
 
         :return: status information for all machines in the model
         """
-        model = await self.controller.get_model(uuid)
-        status = await model.get_status()
-        await model.disconnect()
+        try:
+            model = await self.controller.get_model(uuid)
+            status = await model.get_status()
+            await model.disconnect()
+        except Exception as err:  # pylint: disable=W0703
+            self.logger.error("Failed connecting to model '%s': %s ", uuid, err)
+            return {}
 
         return status["machines"]
 
@@ -223,6 +227,7 @@ class Collector:
             for name, uuid_ in model_uuids.items():
                 self.logger.debug("Checking model '%s'...", name)
                 machines = await self._get_machines_in_model(uuid=uuid_)
+
                 await self._get_machine_stats(
                     machines=machines, model_name=name, gauge_name=gauge_name
                 )
