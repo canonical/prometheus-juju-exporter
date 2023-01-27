@@ -13,7 +13,6 @@ confinement: strict
 apps:
   prometheus-juju-exporter:
     daemon: simple
-    install-mode: disable
     restart-condition: on-abnormal
     command: bin/prometheus-juju-exporter
     plugs: [network, network-bind]
