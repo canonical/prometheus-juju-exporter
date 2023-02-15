@@ -37,6 +37,7 @@ skip_glob = '''
 [tool.pylint]
 max-line-length = 120
 ignore = ['.eggs', '.git', '.tox', '.venv', '.build', 'report', 'tests']
+disable = [ "C0204" ]
 
 [tool.mypy]
 warn_unused_ignores = true
