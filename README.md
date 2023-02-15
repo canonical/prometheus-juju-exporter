@@ -12,3 +12,4 @@ To get the latest development version of the snap, build from the source code an
 make build
 sudo snap install --dangerous prometheus-juju-exporter.snap
 ```
+
