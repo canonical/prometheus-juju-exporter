@@ -19,3 +19,4 @@ By default, prometheus-juju-exporter uses the configuration specified in [config
 The snap requires juju user's credentials to connect to a controller and all of its models. The credentials are set as `juju.username` and `juju.password` config values. Normally, **`superuser`** privilege is expected for such a user for full access to the controller. However, in case it is not possible, the minimum privilege requirements are:
 1. `login` access to the controller instance and `admin` access to the model hosting the controller
 2. `admin` access to any model that's expected to be monitored by this exporter
+
