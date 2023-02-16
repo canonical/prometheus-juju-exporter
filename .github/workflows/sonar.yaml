@@ -49,9 +49,9 @@ jobs:
             git checkout -B ${{ fromJson(steps.get_pr_data.outputs.data).base.ref }} upstream/${{ fromJson(steps.get_pr_data.outputs.data).base.ref }}
             git checkout ${{ github.event.workflow_run.head_branch }}
             git clean -ffdx && git reset --hard HEAD
-      
+
       - name: Download coverage report
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
             script: |
               let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
