@@ -9,7 +9,7 @@ def test_snap_startup():
     """Check if the snap is in active state."""
     assert (
         check_call(
-            "systemctl is-active --quiet"
+            "systemctl is-active --quieti "
             "snap.prometheus-juju-exporter.prometheus-juju-exporter.service".split()
         )
         == 0  # noqa
