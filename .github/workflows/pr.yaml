@@ -15,10 +15,12 @@ on:
 
 jobs:
   pr:
-    uses: canonical/bootstack-actions/.github/workflows/snap-pull-request.yaml@main
+    uses: canonical/bootstack-actions/.github/workflows/pull-request.yaml@main
     secrets: inherit
     with:
       python-version-unit: "['3.8', '3.10']"
       python-version-func: "3.10"
       tox-version: "<4"
-      juju-env: true
+      snapcraft: true
+      commands: "['make functional']"
+
