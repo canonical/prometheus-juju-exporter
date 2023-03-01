@@ -16,9 +16,7 @@ class TestCollectorDaemon:
     def test_parse_config(self, collector_daemon):
         """Test config parsing."""
         statsd = collector_daemon()
-        assert (
-            statsd.config["juju"]["controller_endpoint"].get() == "192.168.1.100:17070"
-        )
+        assert statsd.config["juju"]["controller_endpoint"].get() == "192.168.1.100:17070"
         assert (
             statsd.config["juju"]["controller_cacert"].get()
             == "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n"

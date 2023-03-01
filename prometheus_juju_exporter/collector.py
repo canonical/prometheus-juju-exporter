@@ -30,9 +30,7 @@ class Collector:
         self.virt_mac_prefixes = self.config["detection"]["virt_macs"].as_str_seq()
         self.logger.debug("Collector initialized")
 
-    def refresh_cache(
-        self, gauge_name: str, gauge_desc: str, labels: List[str]
-    ) -> None:
+    def refresh_cache(self, gauge_name: str, gauge_desc: str, labels: List[str]) -> None:
         """Refresh instances for each collection job.
 
         :param str gauge_name: the name of the gauge
@@ -118,8 +116,7 @@ class Collector:
         """Get a list of labelvalues for removed machines."""
         stale_labels = {
             k: self.previously_cached_labels[k]
-            for k in set(self.previously_cached_labels)
-            - set(self.currently_cached_labels)
+            for k in set(self.previously_cached_labels) - set(self.currently_cached_labels)
         }
 
         for label in stale_labels.values():

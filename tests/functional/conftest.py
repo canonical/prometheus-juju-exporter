@@ -13,12 +13,8 @@ SNAP_NAME = "prometheus-juju-exporter"
 
 def get_juju_data():
     """Get juju account data and credentials."""
-    juju_controller_file = os.path.join(
-        os.path.expanduser("~"), JUJU_CRED_DIR, "controllers.yaml"
-    )
-    juju_account_file = os.path.join(
-        os.path.expanduser("~"), JUJU_CRED_DIR, "accounts.yaml"
-    )
+    juju_controller_file = os.path.join(os.path.expanduser("~"), JUJU_CRED_DIR, "controllers.yaml")
+    juju_account_file = os.path.join(os.path.expanduser("~"), JUJU_CRED_DIR, "accounts.yaml")
     assert os.path.isfile(juju_controller_file)
     assert os.path.isfile(juju_account_file)
 
@@ -27,9 +23,7 @@ def get_juju_data():
             controller_data = yaml.safe_load(controller_file)
             current_controller = controller_data["current-controller"]
             cacert = controller_data["controllers"][current_controller]["ca-cert"]
-            endpoint = controller_data["controllers"][current_controller][
-                "api-endpoints"
-            ][0]
+            endpoint = controller_data["controllers"][current_controller]["api-endpoints"][0]
             assert current_controller is not None
             assert cacert is not None
             assert endpoint is not None
@@ -77,10 +71,7 @@ def configure_snap(version):
             logging.error(e)
 
     snap_config_file = os.path.join(SNAP_CONFIG_DIR, version, "config.yaml")
-    assert (
-        check_call(f"sudo mv {temp_config_file} {snap_config_file}".split())
-        == 0  # noqa
-    )
+    assert check_call(f"sudo mv {temp_config_file} {snap_config_file}".split()) == 0  # noqa
 
     assert os.path.isfile(snap_config_file)
 
@@ -88,9 +79,7 @@ def configure_snap(version):
 def get_snap_version():
     """Get the version of the installed snap."""
     try:
-        output = (
-            check_output(f"snap info {SNAP_NAME}".split()).decode().strip().splitlines()
-        )
+        output = check_output(f"snap info {SNAP_NAME}".split()).decode().strip().splitlines()
         package_info = [i for i in output if "installed:" in i]
         version = package_info[0].split("(")[1].split(")")[0]
     except Exception as e:
@@ -109,10 +98,7 @@ def setup_snap():
     if test_snap:
         logging.info("Installing %s snap package...", test_snap)
         assert os.path.isfile(test_snap)
-        assert (
-            check_call(f"sudo snap install --dangerous {test_snap}".split())
-            == 0  # noqa
-        )
+        assert check_call(f"sudo snap install --dangerous {test_snap}".split()) == 0  # noqa
 
         version = get_snap_version()
         configure_snap(version)
@@ -142,6 +128,4 @@ def setup_test_model():
     yield test_model_name
 
     logging.info("Destroying model '%s'...", test_model_name)
-    check_call(
-        f"juju destroy-model --destroy-storage --force -y {test_model_name}".split()
-    )
+    check_call(f"juju destroy-model --destroy-storage --force -y {test_model_name}".split())

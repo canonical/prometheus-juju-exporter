@@ -23,9 +23,7 @@ class ExporterDaemon:
         self.collector = Collector()
         self.logger.debug("Exporter initialized")
 
-    def _create_metrics_dict(
-        self, gauge_name: str, gauge_desc: str, labels: List[str]
-    ) -> None:
+    def _create_metrics_dict(self, gauge_name: str, gauge_desc: str, labels: List[str]) -> None:
         """Create a dict of gauge instances.
 
         :param str gauge_name: the name of the gauge
@@ -50,15 +48,11 @@ class ExporterDaemon:
                 labels=values["labels"],
             )
             for labels, value in values["labelvalues_update"]:
-                self.logger.debug(
-                    "Updating Gauge %s, %s: %s", gauge_name, labels, value
-                )
+                self.logger.debug("Updating Gauge %s, %s: %s", gauge_name, labels, value)
                 self.metrics[gauge_name].labels(**labels).set(value)
 
             for labels in values["labelvalues_remove"]:
-                self.logger.debug(
-                    "Deleting labelvalues %s from %s...", labels, gauge_name
-                )
+                self.logger.debug("Deleting labelvalues %s from %s...", labels, gauge_name)
                 self.metrics[gauge_name].remove(*labels)
 
     async def trigger(self) -> None:
@@ -69,9 +63,7 @@ class ExporterDaemon:
                 data = await self.collector.get_stats()
                 self.update_registry(data)
                 self.logger.info("Gauges collected and ready for exporting.")
-                await asyncio.sleep(
-                    self.config["exporter"]["collect_interval"].get(int) * 60
-                )
+                await asyncio.sleep(self.config["exporter"]["collect_interval"].get(int) * 60)
             except Exception as err:  # pylint: disable=W0703
                 self.logger.error("Collection job resulted in error: %s", err)
                 sys.exit(1)
