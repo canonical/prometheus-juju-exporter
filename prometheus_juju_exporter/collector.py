@@ -1,7 +1,7 @@
 """Collector module."""
 from enum import Enum
 from logging import getLogger
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from juju.controller import Controller
 
@@ -97,7 +97,7 @@ class Collector:
         """
         return {
             "job": "prometheus-juju-exporter",
-            "hostname": hostname,
+            "hostname": str(hostname),
             "customer": self.config["customer"]["name"].get(str),
             "cloud_name": self.config["customer"]["cloud_name"].get(str),
             "juju_model": model_name,
@@ -140,6 +140,37 @@ class Collector:
 
         return MachineType.METAL
 
+    def _get_machine_sensible_hostname(self, machine: Dict) -> Union[str, None]:
+        """Try to find a sensible hostname for the machine.
+
+        The hostname field is only supported for juju controller versions
+        2.8.10 and upwards. For the remaining lower versions, this field
+        exists however is None or "None". This method tries to get it from
+        hostname if it can, else it will try to get it from the "instance-id"
+        field, which seems to exist almost always.
+
+        :param dict machine: status information for a machine
+        :return Union[str, None]: a sensible hostname string for the machine if
+            applicable, else None.
+        """
+        sensible_hostname = None
+        for field in ["hostname", "instance-id"]:
+            candidate = machine.get(field, None)
+            self.logger.debug(
+                "Candidate hostname:[%s] in field:[%s]",
+                candidate,
+                field
+            )
+            if candidate not in [None, "None"]:
+                sensible_hostname = candidate
+                self.logger.debug(
+                    "Selecting sensible hostname:[%s] in field:[%s]",
+                    sensible_hostname,
+                    field
+                )
+                break
+        return sensible_hostname
+
     async def _get_machine_stats(
         self, machines: Dict, model_name: str, gauge_name: str
     ) -> None:
@@ -153,14 +184,15 @@ class Collector:
             machine_type = self._get_machine_type(machine)
             value = self._get_gauge_value(status=machine["agent-status"]["status"])
 
+            hostname = self._get_machine_sensible_hostname(machine)
             labels = self._create_gauge_label(
-                hostname=machine["hostname"],
+                hostname=hostname,
                 model_name=model_name,
                 machine_type=machine_type.value,
             )
 
-            if labels["hostname"] and labels["hostname"] != "None":
-                self.currently_cached_labels[machine["hostname"]] = (
+            if labels["hostname"] != "None":
+                self.currently_cached_labels[hostname] = (
                     labels.copy(),
                     value,
                 )
@@ -185,14 +217,15 @@ class Collector:
         for container in containers.values():
             value = self._get_gauge_value(container["agent-status"]["status"])
 
+            hostname = self._get_machine_sensible_hostname(container)
             labels = self._create_gauge_label(
-                hostname=container["hostname"],
+                hostname=hostname,
                 model_name=model_name,
                 machine_type=MachineType.LXD.value,
             )
 
-            if labels["hostname"] and labels["hostname"] != "None":
-                self.currently_cached_labels[container["hostname"]] = (
+            if labels["hostname"] != "None":
+                self.currently_cached_labels[hostname] = (
                     labels.copy(),
                     value,
                 )
