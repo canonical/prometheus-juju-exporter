@@ -186,18 +186,18 @@ class TestCollectorDaemon:
             ({"hostname": None, "instance-id": "testid"}, "testid"),
             ({"hostname": "None", "instance-id": "testid"}, "testid"),
             ({"hostname": "testhost", "instance-id": "testid"}, "testhost"),
-            ({"hostname": None, "instance-id": None}, None),
-            ({"hostname": None, "instance-id": "None"}, None),
-            ({"hostname": "None", "instance-id": None}, None),
-            ({"hostname": "None", "instance-id": "None"}, None),
+            ({"hostname": None, "instance-id": None}, "None"),
+            ({"hostname": None, "instance-id": "None"}, "None"),
+            ({"hostname": "None", "instance-id": None}, "None"),
+            ({"hostname": "None", "instance-id": "None"}, "None"),
             ({"hostname": "testhost"}, "testhost"),
-            ({"hostname": None}, None),
-            ({"hostname": "None"}, None),
+            ({"hostname": None}, "None"),
+            ({"hostname": "None"}, "None"),
             ({"instance-id": "testid"}, "testid"),
-            ({"instance-id": None}, None),
-            ({"instance-id": "None"}, None),
-            ({}, None)
-        ]
+            ({"instance-id": None}, "None"),
+            ({"instance-id": "None"}, "None"),
+            ({}, "None"),
+        ],
     )
     def test_get_machine_sensible_hostname(self, collector_daemon, machine, hostname):
         """Test getting a sensible hostname from machine data."""

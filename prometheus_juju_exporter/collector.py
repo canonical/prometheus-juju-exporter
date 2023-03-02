@@ -1,7 +1,7 @@
 """Collector module."""
 from enum import Enum
 from logging import getLogger
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 from juju.controller import Controller
 
@@ -97,7 +97,7 @@ class Collector:
         """
         return {
             "job": "prometheus-juju-exporter",
-            "hostname": str(hostname),
+            "hostname": hostname,
             "customer": self.config["customer"]["name"].get(str),
             "cloud_name": self.config["customer"]["cloud_name"].get(str),
             "juju_model": model_name,
@@ -140,7 +140,7 @@ class Collector:
 
         return MachineType.METAL
 
-    def _get_machine_sensible_hostname(self, machine: Dict) -> Union[str, None]:
+    def _get_machine_sensible_hostname(self, machine: Dict) -> str:
         """Try to find a sensible hostname for the machine.
 
         The hostname field is only supported for juju controller versions
@@ -150,23 +150,19 @@ class Collector:
         field, which seems to exist almost always.
 
         :param dict machine: status information for a machine
-        :return Union[str, None]: a sensible hostname string for the machine if
-            applicable, else None.
+        :return str: a sensible hostname string for the machine if
+            applicable, else the string literal "None".
         """
-        sensible_hostname = None
+        sensible_hostname = "None"
         for field in ["hostname", "instance-id"]:
             candidate = machine.get(field, None)
-            self.logger.debug(
-                "Candidate hostname:[%s] in field:[%s]",
-                candidate,
-                field
-            )
+            self.logger.debug("Candidate hostname:[%s] in field:[%s]", candidate, field)
             if candidate not in [None, "None"]:
                 sensible_hostname = candidate
                 self.logger.debug(
                     "Selecting sensible hostname:[%s] in field:[%s]",
                     sensible_hostname,
-                    field
+                    field,
                 )
                 break
         return sensible_hostname
