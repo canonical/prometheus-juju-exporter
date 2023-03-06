@@ -36,7 +36,20 @@ class TestCollectorDaemon:
         ]
 
     @pytest.mark.asyncio
-    async def test_get_stats(self, collector_daemon):
+    @pytest.mark.parametrize(
+        # fmt: off
+        "update_model_status",
+        [
+            {},
+            {"machines": {"0": {"hostname": "None", "instance-id": "juju-000ddd-test-0"}}},
+            {"machines": {"0": {"hostname": None, "instance-id": "juju-000ddd-test-0"}}},
+            {"machines": {"0": {"containers": {"0/lxd/0": {"hostname": "None"}}}}},
+            {"machines": {"0": {"containers": {"0/lxd/0": {"hostname": None}}}}},
+        ],
+        indirect=True,
+        # fmt: on
+    )
+    async def test_get_stats(self, collector_daemon, update_model_status):
         """Test get_stats function and the execution of the collector."""
         statsd = collector_daemon()
         statsd.currently_cached_labels = {
