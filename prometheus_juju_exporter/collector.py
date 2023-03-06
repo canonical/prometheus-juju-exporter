@@ -153,18 +153,25 @@ class Collector:
         :return str: a valid identifier string for the machine if
             applicable, else the string literal "None".
         """
+        self.logger.debug("Trying to find an identifier for machine: %s", str(machine))
         machine_id = "None"
         for field in ["hostname", "instance-id"]:
             candidate = machine.get(field, None)
-            self.logger.debug("Candidate hostname:[%s] in field:[%s]", candidate, field)
+            self.logger.debug(
+                "Candidate machine id:[%s] in field:[%s]", candidate, field
+            )
             if candidate not in [None, "None"]:
                 machine_id = candidate
                 self.logger.debug(
-                    "Selecting sensible hostname:[%s] in field:[%s]",
+                    "Selecting machine id:[%s] in field:[%s]",
                     machine_id,
                     field,
                 )
                 break
+        if machine_id == "None":
+            self.logger.error(
+                "Failed to find a machine identifier for machine: %s", str(machine)
+            )
         return machine_id
 
     async def _get_machine_stats(
