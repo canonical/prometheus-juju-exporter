@@ -140,8 +140,8 @@ class Collector:
 
         return MachineType.METAL
 
-    def _get_machine_sensible_hostname(self, machine: Dict) -> str:
-        """Try to find a sensible hostname for the machine.
+    def _get_machine_identifier(self, machine: Dict) -> str:
+        """Try to find a valid identifier for the machine.
 
         The hostname field is only supported for juju controller versions
         2.8.10 and upwards. For the remaining lower versions, this field
@@ -150,22 +150,22 @@ class Collector:
         field, which seems to exist almost always.
 
         :param dict machine: status information for a machine
-        :return str: a sensible hostname string for the machine if
+        :return str: a valid identifier string for the machine if
             applicable, else the string literal "None".
         """
-        sensible_hostname = "None"
+        machine_id = "None"
         for field in ["hostname", "instance-id"]:
             candidate = machine.get(field, None)
             self.logger.debug("Candidate hostname:[%s] in field:[%s]", candidate, field)
             if candidate not in [None, "None"]:
-                sensible_hostname = candidate
+                machine_id = candidate
                 self.logger.debug(
                     "Selecting sensible hostname:[%s] in field:[%s]",
-                    sensible_hostname,
+                    machine_id,
                     field,
                 )
                 break
-        return sensible_hostname
+        return machine_id
 
     async def _get_machine_stats(
         self, machines: Dict, model_name: str, gauge_name: str
@@ -179,20 +179,18 @@ class Collector:
         for machine in machines.values():
             machine_type = self._get_machine_type(machine)
             value = self._get_gauge_value(status=machine["agent-status"]["status"])
+            machine_id = self._get_machine_identifier(machine)
 
-            hostname = self._get_machine_sensible_hostname(machine)
-            labels = self._create_gauge_label(
-                hostname=hostname,
-                model_name=model_name,
-                machine_type=machine_type.value,
-            )
-
-            if labels["hostname"] != "None":
-                self.currently_cached_labels[hostname] = (
+            if machine_id != "None":
+                labels = self._create_gauge_label(
+                    hostname=machine_id,
+                    model_name=model_name,
+                    machine_type=machine_type.value,
+                )
+                self.currently_cached_labels[machine_id] = (
                     labels.copy(),
                     value,
                 )
-
                 self.data[gauge_name]["labelvalues_update"].append((labels, value))
 
             self._get_container_status(
@@ -212,16 +210,15 @@ class Collector:
         """
         for container in containers.values():
             value = self._get_gauge_value(container["agent-status"]["status"])
+            machine_id = self._get_machine_identifier(container)
 
-            hostname = self._get_machine_sensible_hostname(container)
-            labels = self._create_gauge_label(
-                hostname=hostname,
-                model_name=model_name,
-                machine_type=MachineType.LXD.value,
-            )
-
-            if labels["hostname"] != "None":
-                self.currently_cached_labels[hostname] = (
+            if machine_id != "None":
+                labels = self._create_gauge_label(
+                    hostname=machine_id,
+                    model_name=model_name,
+                    machine_type=MachineType.LXD.value,
+                )
+                self.currently_cached_labels[machine_id] = (
                     labels.copy(),
                     value,
                 )

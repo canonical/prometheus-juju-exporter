@@ -181,7 +181,7 @@ class TestCollectorDaemon:
         assert machine_type.value == expect_machine_type
 
     @pytest.mark.parametrize(
-        "machine, hostname",
+        "machine, machine_id",
         [
             ({"hostname": None, "instance-id": "testid"}, "testid"),
             ({"hostname": "None", "instance-id": "testid"}, "testid"),
@@ -199,6 +199,6 @@ class TestCollectorDaemon:
             ({}, "None"),
         ],
     )
-    def test_get_machine_sensible_hostname(self, collector_daemon, machine, hostname):
-        """Test getting a sensible hostname from machine data."""
-        assert collector_daemon()._get_machine_sensible_hostname(machine) == hostname
+    def test_get_machine_identifier(self, collector_daemon, machine, machine_id):
+        """Test getting a valid machine id from machine data."""
+        assert collector_daemon()._get_machine_identifier(machine) == machine_id
