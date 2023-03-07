@@ -160,7 +160,7 @@ class Collector:
             self.logger.debug(
                 "Candidate machine id:[%s] in field:[%s]", candidate, field
             )
-            if candidate not in [None, "None"]:
+            if candidate not in [None, "None", "pending"]:
                 machine_id = candidate
                 self.logger.debug(
                     "Selecting machine id:[%s] in field:[%s]",
