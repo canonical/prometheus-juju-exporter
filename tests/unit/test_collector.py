@@ -36,7 +36,20 @@ class TestCollectorDaemon:
         ]
 
     @pytest.mark.asyncio
-    async def test_get_stats(self, collector_daemon):
+    @pytest.mark.parametrize(
+        # fmt: off
+        "update_model_status",
+        [
+            {},
+            {"machines": {"0": {"hostname": "None", "instance-id": "juju-000ddd-test-0"}}},
+            {"machines": {"0": {"hostname": None, "instance-id": "juju-000ddd-test-0"}}},
+            {"machines": {"0": {"containers": {"0/lxd/0": {"hostname": "None"}}}}},
+            {"machines": {"0": {"containers": {"0/lxd/0": {"hostname": None}}}}},
+        ],
+        indirect=True,
+        # fmt: on
+    )
+    async def test_get_stats(self, collector_daemon, update_model_status):
         """Test get_stats function and the execution of the collector."""
         statsd = collector_daemon()
         statsd.currently_cached_labels = {
@@ -179,3 +192,28 @@ class TestCollectorDaemon:
         machine_type = statsd._get_machine_type(machine)
 
         assert machine_type.value == expect_machine_type
+
+    @pytest.mark.parametrize(
+        "host, host_id",
+        [
+            ({"hostname": None, "instance-id": "testid"}, "testid"),
+            ({"hostname": "None", "instance-id": "testid"}, "testid"),
+            ({"hostname": "testhost", "instance-id": "testid"}, "testhost"),
+            ({"hostname": None, "instance-id": None}, "None"),
+            ({"hostname": None, "instance-id": "None"}, "None"),
+            ({"hostname": "None", "instance-id": None}, "None"),
+            ({"hostname": "None", "instance-id": "None"}, "None"),
+            ({"hostname": None, "instance-id": "pending"}, "None"),
+            ({"hostname": "testhost"}, "testhost"),
+            ({"hostname": None}, "None"),
+            ({"hostname": "None"}, "None"),
+            ({"instance-id": "testid"}, "testid"),
+            ({"instance-id": None}, "None"),
+            ({"instance-id": "None"}, "None"),
+            ({"instance-id": "pending"}, "None"),
+            ({}, "None"),
+        ],
+    )
+    def test_get_host_identifier(self, collector_daemon, host, host_id):
+        """Test getting a valid host id from host data."""
+        assert collector_daemon()._get_host_identifier(host) == host_id

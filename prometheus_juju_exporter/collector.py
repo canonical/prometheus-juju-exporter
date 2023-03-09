@@ -140,6 +140,48 @@ class Collector:
 
         return MachineType.METAL
 
+    def _get_host_identifier(self, host: Dict) -> str:
+        """Try to find a valid identifier for the host.
+
+        The hostname field is only supported for juju controller versions
+        2.8.10 and upwards. For the remaining lower versions, this field
+        exists however is None or "None". This method tries to get it from
+        hostname if it can, else it will try to get it from the "instance-id"
+        field, which seems to exist almost always.
+
+        The instance-id with the value "pending" is also treated specially.
+        This value is observed when model status data was gathered
+        during machine/container creation phase. In this case, an info is
+        issued for the operator and this host will be treated as there is no
+        valid identifier.
+
+        :param dict machine: status dictionary for a machine or container
+        :return str: a valid identifier string for the host if
+            applicable, else the string literal "None".
+        """
+        self.logger.debug("Trying to find an identifier for host: %s", str(host))
+        host_id = "None"
+        for field in ["hostname", "instance-id"]:
+            candidate = host.get(field, None)
+            if candidate not in [None, "None"]:
+                host_id = candidate
+                self.logger.debug(
+                    "Candidate host id:[%s] in field:[%s]",
+                    host_id,
+                    field,
+                )
+                break
+
+        if host_id == "pending":
+            self.logger.info("Found host with pending identifier. Skipping.")
+            return "None"
+
+        if host_id == "None":
+            self.logger.error("Failed to find identifier for host: %s", str(host))
+        else:
+            self.logger.debug("Found identifier for host: %s", host_id)
+        return host_id
+
     async def _get_machine_stats(
         self, machines: Dict, model_name: str, gauge_name: str
     ) -> None:
@@ -152,28 +194,27 @@ class Collector:
         for machine in machines.values():
             machine_type = self._get_machine_type(machine)
             value = self._get_gauge_value(status=machine["agent-status"]["status"])
+            machine_id = self._get_host_identifier(machine)
 
-            labels = self._create_gauge_label(
-                hostname=machine["hostname"],
-                model_name=model_name,
-                machine_type=machine_type.value,
-            )
-
-            if labels["hostname"] and labels["hostname"] != "None":
-                self.currently_cached_labels[machine["hostname"]] = (
+            if machine_id != "None":
+                labels = self._create_gauge_label(
+                    hostname=machine_id,
+                    model_name=model_name,
+                    machine_type=machine_type.value,
+                )
+                self.currently_cached_labels[machine_id] = (
                     labels.copy(),
                     value,
                 )
-
                 self.data[gauge_name]["labelvalues_update"].append((labels, value))
 
-            self._get_container_status(
+            self._get_container_stats(
                 containers=machine["containers"],
                 model_name=model_name,
                 gauge_name=gauge_name,
             )
 
-    def _get_container_status(
+    def _get_container_stats(
         self, containers: Dict, model_name: str, gauge_name: str
     ) -> None:
         """Get lxd containers stats.
@@ -184,15 +225,15 @@ class Collector:
         """
         for container in containers.values():
             value = self._get_gauge_value(container["agent-status"]["status"])
+            container_id = self._get_host_identifier(container)
 
-            labels = self._create_gauge_label(
-                hostname=container["hostname"],
-                model_name=model_name,
-                machine_type=MachineType.LXD.value,
-            )
-
-            if labels["hostname"] and labels["hostname"] != "None":
-                self.currently_cached_labels[container["hostname"]] = (
+            if container_id != "None":
+                labels = self._create_gauge_label(
+                    hostname=container_id,
+                    model_name=model_name,
+                    machine_type=MachineType.LXD.value,
+                )
+                self.currently_cached_labels[container_id] = (
                     labels.copy(),
                     value,
                 )

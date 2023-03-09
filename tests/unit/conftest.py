@@ -208,6 +208,26 @@ def collected_stats_data():
 
 
 @pytest.fixture
+def update_model_status(monkeypatch, request):
+    """Fixture to update the model status dynamically."""
+
+    def _nested_update(left, right):
+        """In-place nested update a dictionary."""
+        for k, v in right.items():
+            if isinstance(v, dict):
+                left[k] = _nested_update(left.get(k, {}), v)
+            else:
+                left[k] = v
+        return left
+
+    mock_get_status = mock.AsyncMock()
+    status_data = get_juju_stats_data().return_value
+    _nested_update(status_data, request.param)
+    mock_get_status.return_value = status_data
+    monkeypatch.setattr("juju.model.Model.get_status", mock_get_status)
+
+
+@pytest.fixture
 def config_instance(monkeypatch):
     """Mock config."""
     from prometheus_juju_exporter.config import Config
