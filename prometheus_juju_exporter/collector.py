@@ -90,7 +90,7 @@ class Collector:
     ) -> Dict[str, str]:
         """Create label dict for gauge.
 
-        :param str hostname: the hostnameof the machine
+        :param str hostname: the hostname of the machine
         :param str model_name: the name of the model the machine is in
         :param str machine_type: the hardware type of the machine
         :return dict labelvalues: the label values in dict format
