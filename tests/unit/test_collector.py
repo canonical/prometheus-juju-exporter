@@ -52,30 +52,6 @@ class TestCollectorDaemon:
     async def test_get_stats(self, collector_daemon, update_model_status):
         """Test get_stats function and the execution of the collector."""
         statsd = collector_daemon()
-        statsd.currently_cached_labels = {
-            "juju-000ddd-test-0": (
-                {
-                    "job": "prometheus-juju-exporter",
-                    "hostname": "juju-000ddd-test-0",
-                    "customer": "example_customer",
-                    "cloud_name": "example_cloud",
-                    "juju_model": "default",
-                    "type": "kvm",
-                },
-                1,
-            ),
-            "juju-000ddd-0-lxd-1": (
-                {
-                    "job": "prometheus-juju-exporter",
-                    "hostname": "juju-000ddd-0-lxd-1",
-                    "customer": "example_customer",
-                    "cloud_name": "example_cloud",
-                    "juju_model": "test",
-                    "type": "lxd",
-                },
-                1,
-            ),
-        }
 
         await statsd.get_stats()
 
@@ -89,16 +65,6 @@ class TestCollectorDaemon:
                     "cloud_name",
                     "juju_model",
                     "type",
-                ],
-                "labelvalues_remove": [
-                    [
-                        "prometheus-juju-exporter",
-                        "juju-000ddd-0-lxd-1",
-                        "example_customer",
-                        "example_cloud",
-                        "test",
-                        "lxd",
-                    ]
                 ],
                 "labelvalues_update": [
                     (
@@ -170,7 +136,6 @@ class TestCollectorDaemon:
                     "juju_model",
                     "type",
                 ],
-                "labelvalues_remove": [],
                 "labelvalues_update": [],
             }
         }
