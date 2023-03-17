@@ -4,6 +4,8 @@ from unittest import mock
 
 import pytest
 
+from prometheus_juju_exporter.collector import MachineType
+
 
 class TestCollectorDaemon:
     """Collector test class."""
@@ -189,9 +191,42 @@ class TestCollectorDaemon:
                 }
             }
         }
-        machine_type = statsd._get_machine_type(machine)
+        machine_type = statsd._get_machine_type(machine, "dummy-0")
 
         assert machine_type.value == expect_machine_type
+
+    def test_get_machine_type_interface_skip(self, collector_daemon):
+        """Test that blacklisted interfaces are not used to detect machine type."""
+        statsd = collector_daemon()
+        skip_interfaces = ["virb*", "tap-*"]
+        kvm_prefix = "fa:16:3e:"
+        tap_prefix = "52:54:00:"
+        machine_mac = "00:00:00:00:00:00"
+
+        machine = {
+            "network-interfaces": {
+                "ens3": {
+                    "mac-address": machine_mac,
+                },
+                "virbr0": {
+                    "mac-address": kvm_prefix + "00:00:01",
+                },
+                "virbr1": {
+                    "mac-address": kvm_prefix + "00:00:02",
+                },
+                "tap-0": {
+                    "mac-address": tap_prefix + "00:00:01",
+                },
+            }
+        }
+
+        statsd.config["detection"]["virt_macs"].set([kvm_prefix, tap_prefix])
+        # Assert that without skipping interfaces, machine is detected as virtual
+        assert statsd._get_machine_type(machine, "dummy-0") == MachineType.KVM
+
+        # Add interface skipping and verify that machine is
+        statsd.config["detection"]["skip_interfaces"].set(skip_interfaces)
+        assert statsd._get_machine_type(machine, "dummy-0") == MachineType.METAL
 
     @pytest.mark.parametrize(
         "host, host_id",

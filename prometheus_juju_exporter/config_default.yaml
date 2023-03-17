@@ -13,7 +13,8 @@ exporter:
   collect_interval: 15
 
 detection: # parameters affecting the detection algorithm
-  virt_macs: 
+  skip_interfaces: []  # regexp list of interfaces that should be skipped during hw typ detection
+  virt_macs:
     - "52:54:00"
     - "fa:16:3e"
     - "06:f1:3a"

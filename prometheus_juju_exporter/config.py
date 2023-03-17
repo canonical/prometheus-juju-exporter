@@ -56,7 +56,12 @@ class Config(metaclass=ConfigMeta):
                 ]
             ),
             "customer": OrderedDict([("name", str), ("cloud_name", str)]),
-            "detection": OrderedDict([("virt_macs", confuse.StrSeq())]),
+            "detection": OrderedDict(
+                [
+                    ("virt_macs", confuse.StrSeq()),
+                    ("skip_interfaces", confuse.StrSeq()),
+                ]
+            ),
         }
 
         try:

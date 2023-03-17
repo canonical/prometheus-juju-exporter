@@ -13,6 +13,7 @@ exporter:
   collect_interval: 15
 
 detection:
+  skip_interfaces: []
   virt_macs:
     - "52:54:00"
     - "fa:16:3e"
