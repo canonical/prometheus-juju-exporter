@@ -135,7 +135,7 @@ class Collector:
         self.logger.debug("Determining type of machine: %s", machine_id)
         machine_type = MachineType.METAL
         skip_interfaces = self.config["detection"]["skip_interfaces"].as_str_seq()
-        interface_filter = re.compile(r"(?=(" + "|".join(skip_interfaces) + r"))")
+        interface_filter = re.compile(r"|".join(skip_interfaces))
 
         for interface, properties in machine["network-interfaces"].items():
             if skip_interfaces and interface_filter.search(interface) is not None:
@@ -147,9 +147,7 @@ class Collector:
                 continue
 
             mac_address = properties["mac-address"]
-            self.logger.debug(
-                "Considering interface %s with MAC: %s", interface, mac_address
-            )
+            self.logger.debug("Considering interface %s with MAC: %s", interface, mac_address)
             if mac_address.startswith(tuple(self.virt_mac_prefixes)):
                 machine_type = MachineType.KVM
                 break
