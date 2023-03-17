@@ -20,3 +20,5 @@ detection:
     - "06:f1:3a"
     - "00:0d:3a"
     - "00:50:56"
+
+debug: False
