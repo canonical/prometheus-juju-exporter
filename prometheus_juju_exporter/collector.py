@@ -30,9 +30,7 @@ class Collector:
         self.virt_mac_prefixes = self.config["detection"]["virt_macs"].as_str_seq()
         self.logger.debug("Collector initialized")
 
-    def refresh_cache(
-        self, gauge_name: str, gauge_desc: str, labels: List[str]
-    ) -> None:
+    def refresh_cache(self, gauge_name: str, gauge_desc: str, labels: List[str]) -> None:
         """Refresh instances for each collection job.
 
         :param str gauge_name: the name of the gauge
@@ -118,8 +116,7 @@ class Collector:
         """Get a list of labelvalues for removed machines."""
         stale_labels = {
             k: self.previously_cached_labels[k]
-            for k in set(self.previously_cached_labels)
-            - set(self.currently_cached_labels)
+            for k in set(self.previously_cached_labels) - set(self.currently_cached_labels)
         }
 
         for label in stale_labels.values():
@@ -182,9 +179,7 @@ class Collector:
             self.logger.debug("Found identifier for host: %s", host_id)
         return host_id
 
-    async def _get_machine_stats(
-        self, machines: Dict, model_name: str, gauge_name: str
-    ) -> None:
+    async def _get_machine_stats(self, machines: Dict, model_name: str, gauge_name: str) -> None:
         """Get baremetal or vm machines' stats.
 
         :param dict machines: status information for all machines in the model
@@ -214,9 +209,7 @@ class Collector:
                 gauge_name=gauge_name,
             )
 
-    def _get_container_stats(
-        self, containers: Dict, model_name: str, gauge_name: str
-    ) -> None:
+    def _get_container_stats(self, containers: Dict, model_name: str, gauge_name: str) -> None:
         """Get lxd containers stats.
 
         :param dict containers: status information for all containers on a machine

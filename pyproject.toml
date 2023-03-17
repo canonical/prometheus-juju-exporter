@@ -4,12 +4,12 @@
 
 [tool.flake8]
 ignore = ["C901", "D100", "D101", "D102", "D103", "W503", "W504"]
-exclude = ['.eggs', '.git', '.tox', '.venv', '.build', 'report']
-max-line-length = 120
+exclude = ['.eggs', '.git', '.tox', '.venv', '.build', 'build', 'report']
+max-line-length = 99
 max-complexity = 10
 
 [tool.black]
-line-length = 88
+line-length = 99
 exclude = '''
 /(
     | .eggs
@@ -17,54 +17,56 @@ exclude = '''
     | .tox
     | .venv
     | .build
+    | build
     | report
 )/
 '''
 
 [tool.isort]
 profile = "black"
-skip_glob = '''
-/(
-    | .eggs
-    | .git
-    | .tox
-    | .venv
-    | .build
-    | report
-)/
-'''
+skip_glob = [
+  ".eggs",
+  ".git",
+  ".tox",
+  ".venv",
+  ".build",
+  "build",
+  "report"
+]
 
 [tool.pylint]
-max-line-length = 120
-ignore = ['.eggs', '.git', '.tox', '.venv', '.build', 'report', 'tests']
-disable = ['C0204']
+max-line-length = 99
+ignore-paths = [
+  ".eggs",
+  ".git",
+  ".tox",
+  ".venv",
+  ".build",
+  "report",
+  "tests",
+]
 
 [tool.mypy]
 warn_unused_ignores = true
 warn_unused_configs = true
 warn_unreachable = true
 disallow_untyped_defs = true
-exclude = ['.eggs', '.git', '.tox', '.venv', '.build', 'report', 'tests']
-
-## Ignore unsupported imports
-[[tool.mypy.overrides]]
-module = [
-  "juju.*",
-  "setuptools.*",
-  "confuse.*"
-]
 ignore_missing_imports = true
-
-[tool.pytest.ini_options]
-addopts = '''
-    --last-failed 
-    --last-failed-no-failures all
-'''
+exclude = [
+  ".eggs",
+  ".git",
+  ".tox",
+  ".venv",
+  ".build",
+  "lib",
+  "report",
+  "tests",
+]
 
 [tool.coverage.run]
 relative_files = true
 source = ["."]
-omit = ["tests/**", "docs/**", "contrib/**", "snap/**", "setup.py"]
+omit = ["tests/**", "docs/**", "lib/**", "snap/**", "build/**", "setup.py"]
 
 [tool.coverage.report]
 fail_under = 100
