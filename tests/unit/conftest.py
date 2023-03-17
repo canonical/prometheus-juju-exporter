@@ -193,16 +193,6 @@ def collected_stats_data():
                     0,
                 ),
             ],
-            "labelvalues_remove": [
-                [
-                    "prometheus-juju-exporter",
-                    "hostname3",
-                    "customer3",
-                    "cloud name",
-                    "juju model",
-                    "machine type",
-                ]
-            ],
         }
     }
 

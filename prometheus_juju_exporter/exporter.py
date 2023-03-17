@@ -57,7 +57,7 @@ class ExporterDaemon:
 
             previous_labels = set()
             for metric in self._registry.collect():
-                for sample in metric.samples:  # pragma nocover
+                for sample in metric.samples:
                     if sample.name == gauge_name:
                         previous_labels.add(tuple(sample.labels.values()))
 
@@ -66,7 +66,7 @@ class ExporterDaemon:
                 current_labels.add(tuple(value[0].values()))
 
             stale_labels = previous_labels - current_labels
-            for labels in stale_labels:  # pragma nocover
+            for labels in stale_labels:
                 self.logger.debug(
                     "Deleting labelvalues %s from %s...", labels, gauge_name
                 )
