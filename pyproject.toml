@@ -36,7 +36,15 @@ skip_glob = [
 
 [tool.pylint]
 max-line-length = 99
-ignore = ['.eggs', '.git', '.tox', '.venv', '.build', 'build', 'report', 'tests']
+ignore-paths = [
+  ".eggs",
+  ".git",
+  ".tox",
+  ".venv",
+  ".build",
+  "report",
+  "tests",
+]
 
 [tool.mypy]
 warn_unused_ignores = true
@@ -44,7 +52,16 @@ warn_unused_configs = true
 warn_unreachable = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
-exclude = ['.eggs', '.git', '.tox', '.venv', '.build', 'build', 'report', 'tests']
+exclude = [
+  ".eggs",
+  ".git",
+  ".tox",
+  ".venv",
+  ".build",
+  "lib",
+  "report",
+  "tests",
+]
 
 [tool.coverage.run]
 relative_files = true

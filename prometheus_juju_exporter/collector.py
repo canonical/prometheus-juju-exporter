@@ -179,9 +179,7 @@ class Collector:
             self.logger.debug("Found identifier for host: %s", host_id)
         return host_id
 
-    async def _get_machine_stats(
-        self, machines: Dict, model_name: str, gauge_name: str
-    ) -> None:
+    async def _get_machine_stats(self, machines: Dict, model_name: str, gauge_name: str) -> None:
         """Get baremetal or vm machines' stats.
 
         :param dict machines: status information for all machines in the model
@@ -211,9 +209,7 @@ class Collector:
                 gauge_name=gauge_name,
             )
 
-    def _get_container_stats(
-        self, containers: Dict, model_name: str, gauge_name: str
-    ) -> None:
+    def _get_container_stats(self, containers: Dict, model_name: str, gauge_name: str) -> None:
         """Get lxd containers stats.
 
         :param dict containers: status information for all containers on a machine

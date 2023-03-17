@@ -23,4 +23,3 @@ jobs:
       tox-version: "<4"
       snapcraft: true
       commands: "['make functional']"
-
