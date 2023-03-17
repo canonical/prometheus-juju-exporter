@@ -57,7 +57,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = '''
-    --last-failed 
+    --last-failed
     --last-failed-no-failures all
 '''
 

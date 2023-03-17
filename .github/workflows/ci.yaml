@@ -34,7 +34,7 @@ jobs:
         run: |
           report_root="/home/runner/work/prometheus-juju-exporter/prometheus-juju-exporter/tests/unit/report/"
           cp ${report_root}/coverage.xml cov.xml
-          
+
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3
         with:

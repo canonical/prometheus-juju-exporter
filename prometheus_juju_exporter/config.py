@@ -57,6 +57,7 @@ class Config(metaclass=ConfigMeta):
             ),
             "customer": OrderedDict([("name", str), ("cloud_name", str)]),
             "detection": OrderedDict([("virt_macs", confuse.StrSeq())]),
+            "debug": bool,
         }
 
         try:
