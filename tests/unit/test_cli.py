@@ -21,15 +21,11 @@ class TestCli:
             set_level.assert_called_once()
             mock_exporter.assert_called_once()
 
-    @pytest.mark.parametrize(
-        "config_option, level_option", [(True, "DEBUG"), (False, "INFO")]
-    )
+    @pytest.mark.parametrize("config_option, level_option", [(True, "DEBUG"), (False, "INFO")])
     def test_config_logger(self, config_option, level_option):
         """Test main function in cli."""
         cli = Cli()
-        with mock.patch(
-            "prometheus_juju_exporter.cli.project_logger.setLevel"
-        ) as set_level:
+        with mock.patch("prometheus_juju_exporter.cli.project_logger.setLevel") as set_level:
             cli.config["debug"] = config_option
             cli.config_logger()
             set_level.assert_called_once_with(level_option)
