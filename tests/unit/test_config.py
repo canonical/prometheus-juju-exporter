@@ -16,9 +16,7 @@ class TestConfig:
     def test_arg(self, config_instance):
         """Check if set_args() is successfully called when arg is not None."""
         config_ins = config_instance({"foo.bar": "car"})
-        config_ins.config.set_args.assert_called_once_with(
-            {"foo.bar": "car"}, dots=True
-        )
+        config_ins.config.set_args.assert_called_once_with({"foo.bar": "car"}, dots=True)
 
     def test_get_config(self, config_instance):
         """Check if getting section config behaves correctly."""

@@ -4,6 +4,8 @@ from unittest import mock
 
 import pytest
 
+from prometheus_juju_exporter.collector import MachineType
+
 
 class TestCollectorDaemon:
     """Collector test class."""
@@ -16,9 +18,7 @@ class TestCollectorDaemon:
     def test_parse_config(self, collector_daemon):
         """Test config parsing."""
         statsd = collector_daemon()
-        assert (
-            statsd.config["juju"]["controller_endpoint"].get() == "192.168.1.100:17070"
-        )
+        assert statsd.config["juju"]["controller_endpoint"].get() == "192.168.1.100:17070"
         assert (
             statsd.config["juju"]["controller_cacert"].get()
             == "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n"
@@ -154,9 +154,52 @@ class TestCollectorDaemon:
                 }
             }
         }
-        machine_type = statsd._get_machine_type(machine)
+        machine_type = statsd._get_machine_type(machine, "dummy-0")
 
         assert machine_type.value == expect_machine_type
+
+    @pytest.mark.parametrize(
+        "skip_interfaces, expected_type",
+        [
+            ([r"^virbr\d*", r"^tap-"], MachineType.METAL),
+            ([], MachineType.KVM),
+        ],
+    )
+    def test_get_machine_type_interface_skip(
+        self, skip_interfaces, expected_type, collector_daemon
+    ):
+        """Test that blacklisted interfaces are not used to detect machine type.
+
+        There are two scenarios to this test:
+          * Without setting 'skip_interfaces', the machine should be marked as KVM
+          * With right interfaces skipped, the machine should be marked as METAL
+        """
+        statsd = collector_daemon()
+        kvm_prefix = "fa:16:3e:"
+        tap_prefix = "52:54:00:"
+        machine_mac = "00:00:00:00:00:00"
+
+        machine = {
+            "network-interfaces": {
+                "ens3": {
+                    "mac-address": machine_mac,
+                },
+                "virbr0": {
+                    "mac-address": kvm_prefix + "00:00:01",
+                },
+                "virbr1": {
+                    "mac-address": kvm_prefix + "00:00:02",
+                },
+                "tap-0": {
+                    "mac-address": tap_prefix + "00:00:01",
+                },
+            }
+        }
+
+        statsd.config["detection"]["virt_macs"].set([kvm_prefix, tap_prefix])
+        statsd.config["detection"]["skip_interfaces"].set(skip_interfaces)
+
+        assert statsd._get_machine_type(machine, "dummy-0") == expected_type
 
     @pytest.mark.parametrize(
         "host, host_id",

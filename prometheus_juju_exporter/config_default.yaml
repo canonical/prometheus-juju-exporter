@@ -13,7 +13,11 @@ exporter:
   collect_interval: 15
 
 detection: # parameters affecting the detection algorithm
-  virt_macs: 
+  skip_interfaces: [] 
+  # This option can be used to exclude interfaces that might confuse the detection algorithm.
+  # Takes a list of regexps as input. Any interface name matching any of the provided expressions will be skipped.
+  # For example: skip_interfaces: ["br.*", "tap-.*"] 
+  virt_macs:
     - "52:54:00"
     - "fa:16:3e"
     - "06:f1:3a"

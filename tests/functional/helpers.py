@@ -80,9 +80,7 @@ def get_machines_counts():
     machine_counts = {"up": 0, "down": 0}
 
     for model in models:
-        machines_output = check_output(
-            f"juju machines -m {model} --format json".split()
-        ).decode()
+        machines_output = check_output(f"juju machines -m {model} --format json".split()).decode()
         machines = json.loads(machines_output)
         model_ups, model_downs = get_machines_in_model(machines)
         machine_counts["up"] += model_ups

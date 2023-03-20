@@ -1,4 +1,5 @@
 """Collector module."""
+import re
 from enum import Enum
 from logging import getLogger
 from typing import Any, Dict, List
@@ -28,9 +29,7 @@ class Collector:
         self.virt_mac_prefixes = self.config["detection"]["virt_macs"].as_str_seq()
         self.logger.debug("Collector initialized")
 
-    def refresh_cache(
-        self, gauge_name: str, gauge_desc: str, labels: List[str]
-    ) -> None:
+    def refresh_cache(self, gauge_name: str, gauge_desc: str, labels: List[str]) -> None:
         """Refresh instances for each collection job.
 
         :param str gauge_name: the name of the gauge
@@ -84,7 +83,7 @@ class Collector:
     ) -> Dict[str, str]:
         """Create label dict for gauge.
 
-        :param str hostname: the hostnameof the machine
+        :param str hostname: the hostname of the machine
         :param str model_name: the name of the model the machine is in
         :param str machine_type: the hardware type of the machine
         :return dict labelvalues: the label values in dict format
@@ -108,20 +107,34 @@ class Collector:
         """
         return int(status == "started")
 
-    def _get_machine_type(self, machine: Dict) -> MachineType:
+    def _get_machine_type(self, machine: Dict, machine_id: str) -> MachineType:
         """Detect machine type based on its MAC address.
 
         :param dict machine: status information for a machine
         :return MachineType: MachineType class object indicating the machine type
         """
-        interfaces = machine["network-interfaces"].values()
+        self.logger.debug("Determining type of machine: %s", machine_id)
+        machine_type = MachineType.METAL
+        skip_interfaces = self.config["detection"]["skip_interfaces"].as_str_seq()
+        interface_filter = re.compile(r"|".join(skip_interfaces))
 
-        for i in interfaces:
-            mac_address = i["mac-address"]
+        for interface, properties in machine["network-interfaces"].items():
+            if skip_interfaces and interface_filter.search(interface) is not None:
+                self.logger.debug(
+                    "Disregarding interface %s. Matching filter: %s",
+                    interface,
+                    skip_interfaces,
+                )
+                continue
+
+            mac_address = properties["mac-address"]
+            self.logger.debug("Considering interface %s with MAC: %s", interface, mac_address)
             if mac_address.startswith(tuple(self.virt_mac_prefixes)):
-                return MachineType.KVM
+                machine_type = MachineType.KVM
+                break
 
-        return MachineType.METAL
+        self.logger.debug("Machine %s is of type: %s", machine_id, machine_type)
+        return machine_type
 
     def _get_host_identifier(self, host: Dict) -> str:
         """Try to find a valid identifier for the host.
@@ -165,9 +178,7 @@ class Collector:
             self.logger.debug("Found identifier for host: %s", host_id)
         return host_id
 
-    async def _get_machine_stats(
-        self, machines: Dict, model_name: str, gauge_name: str
-    ) -> None:
+    async def _get_machine_stats(self, machines: Dict, model_name: str, gauge_name: str) -> None:
         """Get baremetal or vm machines' stats.
 
         :param dict machines: status information for all machines in the model
@@ -175,11 +186,11 @@ class Collector:
         :param str gauge_name: the name of the gauge
         """
         for machine in machines.values():
-            machine_type = self._get_machine_type(machine)
             value = self._get_gauge_value(status=machine["agent-status"]["status"])
             machine_id = self._get_host_identifier(machine)
 
             if machine_id != "None":
+                machine_type = self._get_machine_type(machine, machine_id)
                 labels = self._create_gauge_label(
                     hostname=machine_id,
                     model_name=model_name,
@@ -193,9 +204,7 @@ class Collector:
                 gauge_name=gauge_name,
             )
 
-    def _get_container_stats(
-        self, containers: Dict, model_name: str, gauge_name: str
-    ) -> None:
+    def _get_container_stats(self, containers: Dict, model_name: str, gauge_name: str) -> None:
         """Get lxd containers stats.
 
         :param dict containers: status information for all containers on a machine
