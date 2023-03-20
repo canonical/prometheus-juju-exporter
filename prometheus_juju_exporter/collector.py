@@ -26,8 +26,6 @@ class Collector:
         self.logger = getLogger(__name__)
         self.controller = Controller(max_frame_size=6**24)
         self.data: Dict[str, Any] = {}
-        self.currently_cached_labels: Dict[str, Any] = {}
-        self.previously_cached_labels: Dict[str, Any] = {}
         self.virt_mac_prefixes = self.config["detection"]["virt_macs"].as_str_seq()
         self.logger.debug("Collector initialized")
 
@@ -43,12 +41,8 @@ class Collector:
                 "gauge_desc": gauge_desc,
                 "labels": labels,
                 "labelvalues_update": [],
-                "labelvalues_remove": [],
             }
         }
-
-        self.previously_cached_labels = self.currently_cached_labels.copy()
-        self.currently_cached_labels = {}
 
         self.controller = Controller(max_frame_size=6**24)
 
@@ -112,16 +106,6 @@ class Collector:
             0 for inactive, 1 for active.
         """
         return int(status == "started")
-
-    def _get_labels_to_remove(self, gauge_name: str) -> None:
-        """Get a list of labelvalues for removed machines."""
-        stale_labels = {
-            k: self.previously_cached_labels[k]
-            for k in set(self.previously_cached_labels) - set(self.currently_cached_labels)
-        }
-
-        for label in stale_labels.values():
-            self.data[gauge_name]["labelvalues_remove"].append(list(label[0].values()))
 
     def _get_machine_type(self, machine: Dict, machine_id: str) -> MachineType:
         """Detect machine type based on its MAC address.
@@ -212,10 +196,6 @@ class Collector:
                     model_name=model_name,
                     machine_type=machine_type.value,
                 )
-                self.currently_cached_labels[machine_id] = (
-                    labels.copy(),
-                    value,
-                )
                 self.data[gauge_name]["labelvalues_update"].append((labels, value))
 
             self._get_container_stats(
@@ -240,10 +220,6 @@ class Collector:
                     hostname=container_id,
                     model_name=model_name,
                     machine_type=MachineType.LXD.value,
-                )
-                self.currently_cached_labels[container_id] = (
-                    labels.copy(),
-                    value,
                 )
                 self.data[gauge_name]["labelvalues_update"].append((labels, value))
 
@@ -281,7 +257,6 @@ class Collector:
                     machines=machines, model_name=name, gauge_name=gauge_name
                 )
 
-            self._get_labels_to_remove(gauge_name=gauge_name)
         finally:
             await self.controller.disconnect()
 

@@ -51,7 +51,18 @@ class ExporterDaemon:
                 self.logger.debug("Updating Gauge %s, %s: %s", gauge_name, labels, value)
                 self.metrics[gauge_name].labels(**labels).set(value)
 
-            for labels in values["labelvalues_remove"]:
+            previous_labels = set()
+            for metric in self._registry.collect():
+                for sample in metric.samples:
+                    if sample.name == gauge_name:
+                        previous_labels.add(tuple(sample.labels.values()))
+
+            current_labels = set()
+            for value in values["labelvalues_update"]:
+                current_labels.add(tuple(value[0].values()))
+
+            stale_labels = previous_labels - current_labels
+            for labels in stale_labels:
                 self.logger.debug("Deleting labelvalues %s from %s...", labels, gauge_name)
                 self.metrics[gauge_name].remove(*labels)
 
