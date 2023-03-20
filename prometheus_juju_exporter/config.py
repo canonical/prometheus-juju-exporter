@@ -60,6 +60,7 @@ class Config(metaclass=ConfigMeta):
                     ("skip_interfaces", confuse.StrSeq()),
                 ]
             ),
+            "debug": bool,
         }
 
         try:

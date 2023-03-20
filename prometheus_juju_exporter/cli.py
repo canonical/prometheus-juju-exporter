@@ -1,8 +1,6 @@
 """CLI module."""
-import argparse
-from typing import Any
-
 from prometheus_juju_exporter import logger as project_logger
+from prometheus_juju_exporter.config import Config
 from prometheus_juju_exporter.exporter import ExporterDaemon
 
 
@@ -14,21 +12,10 @@ def config_logger(debug: bool = False) -> None:
     project_logger.setLevel("DEBUG" if debug else "INFO")
 
 
-def main(args: Any = None) -> None:
-    """Program entry point.
-
-    Parse cli arguments and start exporter daemon.
-    """
-    cli = argparse.ArgumentParser(
-        prog="prometheus-juju-exporter",
-        description="PrometheusJujuExporter CLI",
-    )
-
-    cli.add_argument("-d", "--debug", dest="debug", action="store_true", help="Print debug log")
-
-    parser, _ = cli.parse_known_args(args)
-    config_logger(debug=parser.debug)
-
+def main() -> None:
+    """Program entry point."""
+    config = Config().get_config()
+    config_logger(config["debug"].get(bool))
     obj = ExporterDaemon()
     obj.run()
 

@@ -24,7 +24,7 @@ parts:
     plugin: python
     source: .
     python-requirements: [./requirements.txt]
-    python-packages: 
+    python-packages:
       - .
     override-build: |
         snapcraftctl build
