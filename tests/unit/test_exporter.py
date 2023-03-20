@@ -47,6 +47,24 @@ class TestExporterDaemon:
                 "type": "machine type",
             },
         ]
+        expected_labels = [
+            {
+                "job": "prometheus-juju-exporter",
+                "hostname": "hostname1",
+                "customer": "customer1",
+                "cloud_name": "cloud name",
+                "juju_model": "juju model",
+                "type": "machine type",
+            },
+            {
+                "job": "prometheus-juju-exporter",
+                "hostname": "hostname2",
+                "customer": "customer2",
+                "cloud_name": "cloud name",
+                "juju_model": "juju model",
+                "type": "machine type",
+            },
+        ]
         metric1, metric2 = mock.MagicMock(), mock.MagicMock()
         metrics = [metric1, metric2]
         sample1, sample2 = mock.MagicMock(), mock.MagicMock()
@@ -61,7 +79,7 @@ class TestExporterDaemon:
             lambda r: metrics,
         )
         statsd.update_registry(stats)
-        assert len(statsd.metrics["example_gauge"].call_labels) == 2
+        assert statsd.metrics["example_gauge"].call_labels == expected_labels
 
     @pytest.mark.asyncio
     async def test_trigger(self, exporter_daemon):
