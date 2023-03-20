@@ -57,7 +57,7 @@ class Config(metaclass=ConfigMeta):
             "detection": OrderedDict(
                 [
                     ("virt_macs", confuse.StrSeq()),
-                    ("skip_interfaces", confuse.StrSeq()),
+                    ("match_interfaces", str),
                 ]
             ),
             "debug": bool,
