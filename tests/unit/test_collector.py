@@ -169,7 +169,7 @@ class TestCollectorDaemon:
     def test_get_machine_type_interface_match(
         self, match_interfaces, expected_type, collector_daemon
     ):
-        """Test that only whitelist interfaces are used to detect machine type.
+        """Test that only whitelisted interfaces are used to detect machine type.
 
         There are three scenarios to this test:
           * Without setting 'match_interfaces', the machine should be marked as KVM
