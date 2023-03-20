@@ -159,19 +159,21 @@ class TestCollectorDaemon:
         assert machine_type.value == expect_machine_type
 
     @pytest.mark.parametrize(
-        "skip_interfaces, expected_type",
+        "match_interfaces, expected_type",
         [
-            ([r"^virbr\d*", r"^tap-"], MachineType.METAL),
-            ([], MachineType.KVM),
+            (r"^(en[os]|eth)\d+|enp\d+s\d+|enx[0-9a-f]+", MachineType.METAL),
+            (r".*", MachineType.KVM),
+            (r"", MachineType.KVM),
         ],
     )
-    def test_get_machine_type_interface_skip(
-        self, skip_interfaces, expected_type, collector_daemon
+    def test_get_machine_type_interface_match(
+        self, match_interfaces, expected_type, collector_daemon
     ):
-        """Test that blacklisted interfaces are not used to detect machine type.
+        """Test that only whitelisted interfaces are used to detect machine type.
 
-        There are two scenarios to this test:
-          * Without setting 'skip_interfaces', the machine should be marked as KVM
+        There are three scenarios to this test:
+          * Without setting 'match_interfaces', the machine should be marked as KVM
+          * Setting 'match_interfaces' to match all, the machine should be marked as KVM
           * With right interfaces skipped, the machine should be marked as METAL
         """
         statsd = collector_daemon()
@@ -197,7 +199,7 @@ class TestCollectorDaemon:
         }
 
         statsd.config["detection"]["virt_macs"].set([kvm_prefix, tap_prefix])
-        statsd.config["detection"]["skip_interfaces"].set(skip_interfaces)
+        statsd.config["detection"]["match_interfaces"].set(match_interfaces)
 
         assert statsd._get_machine_type(machine, "dummy-0") == expected_type
 
