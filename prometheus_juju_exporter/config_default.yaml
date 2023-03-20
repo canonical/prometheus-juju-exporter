@@ -17,7 +17,7 @@ detection: # parameters affecting the detection algorithm
   # Interface names that should be considered when detecting machine type.
   # Takes a single regexp string as input. Only interface names matching
   # the provided expression will be considered. The default value '' is
-  # empty value) tells the detection algorithm to look through all interfaces.
+  # equivalent to '.*' and tells the detection algorithm to look through all interfaces.
   # Example: match_interfaces: ^(en[os]|eth)\d+|enp\d+s\d+|enx[0-9a-f]+
   virt_macs: []
   # The list of MAC address prefixes to be considered as virtual machines.
