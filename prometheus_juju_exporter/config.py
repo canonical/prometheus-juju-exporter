@@ -47,7 +47,7 @@ class Config(metaclass=ConfigMeta):
             ),
             "juju": OrderedDict(
                 [
-                    ("controller_endpoint", str),
+                    ("controller_endpoint", confuse.StrSeq(split=False)),
                     ("controller_cacert", str),
                     ("username", str),
                     ("password", str),

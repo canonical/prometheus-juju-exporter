@@ -3,7 +3,9 @@ customer:
   cloud_name: "example_cloud"
 
 juju:
-  controller_endpoint: "" # e.g. 192.168.1.100:17070
+  controller_endpoint: ""
+  # This option accepts either single string like "192.168.1.100:17070", or in
+  # case of a HA controller setup, a list of strings ["10.0.0.1:17070", "10.0.0.2:17070"]
   controller_cacert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n"
   username: "example_user"
   password: "example_password"
