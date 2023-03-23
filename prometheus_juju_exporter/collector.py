@@ -5,7 +5,6 @@ from logging import getLogger
 from typing import Any, Dict, List
 
 from juju.controller import Controller
-from juju.errors import JujuError
 
 from prometheus_juju_exporter.config import Config
 
@@ -67,7 +66,8 @@ class Collector:
                         endpoint=endpoint, username=username, password=password, cacert=cacert
                     )
                     break
-                except JujuError as exc:
+                except Exception as exc:  # pylint: disable=W0718
+                    # Controller.connect() can raise generic `Exception`
                     self.logger.warning(
                         "Failed to connect to Juju controller at %s: %s", endpoint, exc
                     )
