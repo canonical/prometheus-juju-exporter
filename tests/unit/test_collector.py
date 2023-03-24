@@ -3,6 +3,7 @@
 from unittest import mock
 
 import pytest
+from juju.errors import JujuError
 
 from prometheus_juju_exporter.collector import MachineType
 
@@ -227,3 +228,77 @@ class TestCollectorDaemon:
     def test_get_host_identifier(self, collector_daemon, host, host_id):
         """Test getting a valid host id from host data."""
         assert collector_daemon()._get_host_identifier(host) == host_id
+
+    @pytest.mark.asyncio
+    async def test_connect_controller_success(self, collector_daemon):
+        """Test collector successfully connecting to the juju controller."""
+        controller = mock.MagicMock()
+        controller.connect = mock.AsyncMock()
+        controller.is_connected.return_value = False
+        endpoints = ["10.0.0.1:17070"]
+        username = "admin"
+        password = "admin"
+        cacert = "CA data"
+        statsd = collector_daemon()
+        statsd.controller = controller
+
+        await statsd._connect_controller(
+            endpoints=endpoints, username=username, password=password, cacert=cacert
+        )
+
+        controller.connect.assert_called_once_with(
+            endpoint=endpoints[0], username=username, password=password, cacert=cacert
+        )
+
+    @pytest.mark.asyncio
+    async def test_connect_controller_failover(self, collector_daemon):
+        """Test collector successfully connecting to the backup juju controller.
+
+        In case the first controller is not accessible, collector should try another
+        controller from the list.
+        """
+        controller = mock.MagicMock()
+        controller.connect = mock.AsyncMock(side_effect=[JujuError, None])
+        controller.is_connected.return_value = False
+        endpoints = ["10.0.0.1:17070", "10.0.0.2:17070"]
+        username = "admin"
+        password = "admin"
+        cacert = "CA data"
+        statsd = collector_daemon()
+        statsd.controller = controller
+        expected_calls = []
+        for endpoint in endpoints:
+            expected_calls.append(
+                mock.call(endpoint=endpoint, username=username, password=password, cacert=cacert)
+            )
+
+        await statsd._connect_controller(
+            endpoints=endpoints, username=username, password=password, cacert=cacert
+        )
+
+        controller.connect.assert_has_calls(expected_calls)
+
+    @pytest.mark.asyncio
+    async def test_connect_controller_fail(self, collector_daemon):
+        """Test collector's failure to connect to any of the juju controllers."""
+        controller = mock.MagicMock()
+        controller.connect = mock.AsyncMock(side_effect=JujuError)
+        controller.is_connected.return_value = False
+        endpoints = ["10.0.0.1:17070", "10.0.0.2:17070"]
+        username = "admin"
+        password = "admin"
+        cacert = "CA data"
+        statsd = collector_daemon()
+        statsd.controller = controller
+        expected_calls = []
+        for endpoint in endpoints:
+            expected_calls.append(
+                mock.call(endpoint=endpoint, username=username, password=password, cacert=cacert)
+            )
+
+        with pytest.raises(RuntimeError):
+            await statsd._connect_controller(
+                endpoints=endpoints, username=username, password=password, cacert=cacert
+            )
+
+        controller.connect.assert_has_calls(expected_calls)

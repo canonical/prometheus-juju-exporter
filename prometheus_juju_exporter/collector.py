@@ -47,11 +47,11 @@ class Collector:
         self.controller = Controller(max_frame_size=6**24)
 
     async def _connect_controller(
-        self, endpoint: str, username: str, password: str, cacert: str
+        self, endpoints: List[str], username: str, password: str, cacert: str
     ) -> None:
         """Connect to a controller via its endpoint.
 
-        :param str endpoint: the hostname:port endpoint of the controller
+        :param List[str] endpoints: list of the hostname:port endpoints of the controllers
             to connect to.
         :param str username: the username for controller-local users
         :param str password: the password for controller-local users
@@ -59,9 +59,21 @@ class Collector:
             (PEM formatted)
         """
         if not self.controller.is_connected():
-            await self.controller.connect(
-                endpoint=endpoint, username=username, password=password, cacert=cacert
-            )
+            for endpoint in endpoints:
+                self.logger.info("Connecting to controller at %s", endpoint)
+                try:
+                    await self.controller.connect(
+                        endpoint=endpoint, username=username, password=password, cacert=cacert
+                    )
+                    break
+                except Exception as exc:  # pylint: disable=W0718
+                    # Controller.connect() can raise generic `Exception`
+                    self.logger.warning(
+                        "Failed to connect to Juju controller at %s: %s", endpoint, exc
+                    )
+                    continue
+            else:
+                raise RuntimeError("Unable to connect to any of the Juju controllers.")
 
     async def _get_machines_in_model(self, uuid: str) -> Dict[Any, Any]:
         """Get a list of all machines in the model with their stats.
@@ -242,14 +254,14 @@ class Collector:
         ]
         self.refresh_cache(gauge_name=gauge_name, gauge_desc=gauge_desc, labels=labels)
 
-        endpoint = self.config["juju"]["controller_endpoint"].get(str)
+        endpoints: List[str] = self.config["juju"]["controller_endpoint"].as_str_seq(split=False)
         username = self.config["juju"]["username"].get(str)
         password = self.config["juju"]["password"].get(str)
         cacert = self.config["juju"]["controller_cacert"].get(str)
 
         try:
             await self._connect_controller(
-                endpoint=endpoint, username=username, password=password, cacert=cacert
+                endpoints=endpoints, username=username, password=password, cacert=cacert
             )
             model_uuids = await self.controller.model_uuids()
             self.logger.debug("List of models in controller: %s", model_uuids)

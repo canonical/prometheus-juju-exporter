@@ -39,6 +39,17 @@ class TestConfig:
             config_ins.validate_config_options()
             exit_call.assert_not_called()
 
+    @pytest.mark.parametrize("endpoint", ["10.0.0.1:17070", "10.0.0.1:17070,10.0.0.2:17070"])
+    def test_validate_config_option_controller_endpoint(self, endpoint, config_instance):
+        """Test that both 'single string' and 'list of strings' pass validation.
+
+        config option 'juju.controller_endpoint' can accept either single string or list
+        of strings. This test makes sure that both formats pass the final verification.
+        """
+        test_config = config_instance()
+        test_config.config["juju"]["controller_endpoint"].set(endpoint)
+        test_config.validate_config_options()
+
     @pytest.mark.parametrize("port_value", ("foo", 65536, None))
     def test_validate_config_options_fail(self, config_instance, port_value):
         """Test validate_config_values function."""
