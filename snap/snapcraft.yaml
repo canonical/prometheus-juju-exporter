@@ -13,7 +13,8 @@ confinement: strict
 apps:
   prometheus-juju-exporter:
     daemon: simple
-    restart-condition: on-abnormal
+    restart-condition: on-failure
+    restart-delay: 30s
     command: bin/prometheus-juju-exporter
     plugs: [network, network-bind]
     environment:
