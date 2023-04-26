@@ -7,8 +7,8 @@ description: |
   Collects juju machine status metrics periodically.
   Provides a prometheus exporter interface exposing the collected metrics.
 architectures:
-  - build-on: amd64
-  - build-on: arm64
+  - amd64
+  - arm64
 
 grade: stable
 confinement: strict
