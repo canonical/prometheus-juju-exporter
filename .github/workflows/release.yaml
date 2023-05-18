@@ -6,7 +6,6 @@ on:
       - '[0-9].[0-9]+'
       - main
       - master
-  workflow_call:
   workflow_dispatch:
 
 jobs:
@@ -19,3 +18,6 @@ jobs:
       tox-version: "<4"
       snapcraft: true
       commands: "['make functional']"
+      # Select latest track for the default branch, otherwise use versioned branch name as the track name
+      track: ${{ contains(fromJSON('["main", "master"]'), github.ref_name) && 'latest' || github.ref_name }}
+      risk-level: edge
