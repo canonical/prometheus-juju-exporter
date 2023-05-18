@@ -1,0 +1,21 @@
+name: Publish snap
+
+on:
+  push:
+    branches:
+      - '[0-9].[0-9]+'
+      - main
+      - master
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: canonical/bootstack-actions/.github/workflows/snap-release.yaml@main
+    secrets: inherit
+    with:
+      python-version-unit: "['3.8', '3.10']"
+      python-version-func: "3.10"
+      tox-version: "<4"
+      snapcraft: true
+      commands: "['make functional']"
