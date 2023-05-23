@@ -18,6 +18,8 @@ jobs:
       tox-version: "<4"
       snapcraft: true
       commands: "['make functional']"
-      # Select latest track for the default branch, otherwise use versioned branch name as the track name
-      track: ${{ contains(fromJSON('["main", "master"]'), github.ref_name) && 'latest' || github.ref_name }}
-      risk-level: edge
+      # "channel" should be one or a (comma-separated) list of <track>/<risk-level>
+      # Check if the current branch is the default ("main" or "master"). If true, track is set to "latest";
+      # otherwise, use the versioned branch name as the track name
+      # The risk level we want to release the snap to is "edge"
+      channel: ${{ contains(fromJSON('["main", "master"]'), github.ref_name) && 'latest' || github.ref_name }}/edge
