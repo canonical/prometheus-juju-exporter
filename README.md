@@ -1,3 +1,4 @@
+[![Snapstore Badge](https://snapcraft.io/prometheus-juju-exporter/badge.svg)](https://snapcraft.io/prometheus-juju-exporter)
 [![Publish Snap Edge](https://github.com/canonical/prometheus-juju-exporter/actions/workflows/release.yaml/badge.svg)](https://github.com/canonical/prometheus-juju-exporter/actions/workflows/release.yaml)
 
 # Prometheus Juju Exporter
