@@ -1,3 +1,6 @@
+[![Snapstore Badge](https://snapcraft.io/prometheus-juju-exporter/badge.svg)](https://snapcraft.io/prometheus-juju-exporter)
+[![Publish Snap Edge](https://github.com/canonical/prometheus-juju-exporter/actions/workflows/release.yaml/badge.svg)](https://github.com/canonical/prometheus-juju-exporter/actions/workflows/release.yaml)
+
 # Prometheus Juju Exporter
 
 prometheus-juju-exporter snap collects machines' running status in all models under a Juju controller. It also provides an interface to expose the metrics to Prometheus for storage and further usage.
