@@ -7,7 +7,7 @@ name: PR workflow running lint checkers, unit and functional tests
 on:
   pull_request:
     types: [ opened, synchronize, reopened ]
-    branches: [ master, main ]
+    branches: [ 3.1 ]
     paths-ignore:
       - '**.md'
       - '**.rst'
@@ -22,3 +22,4 @@ jobs:
       tox-version: "<4"
       snapcraft: true
       commands: "['make functional']"
+      juju-channel: "3.1/stable"
