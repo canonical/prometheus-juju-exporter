@@ -7,7 +7,7 @@ name: PR workflow running lint checkers, unit and functional tests
 on:
   pull_request:
     types: [ opened, synchronize, reopened ]
-    branches: [ 3.1 ]
+    branches: [ master, main ]
     paths-ignore:
       - '**.md'
       - '**.rst'
