@@ -1,4 +1,5 @@
 """Import this library to collect and export machines status of Juju environments."""
+
 import logging
 
 # Initialize a global logger.
