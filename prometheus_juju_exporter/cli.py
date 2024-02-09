@@ -1,4 +1,5 @@
 """CLI module."""
+
 from prometheus_juju_exporter import logger as project_logger
 from prometheus_juju_exporter.config import Config
 from prometheus_juju_exporter.exporter import ExporterDaemon

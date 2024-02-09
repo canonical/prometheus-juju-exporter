@@ -1,4 +1,5 @@
 """Configuration loader."""
+
 import sys
 from collections import OrderedDict
 from logging import getLogger
