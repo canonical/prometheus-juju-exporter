@@ -5,6 +5,7 @@
 name: PR workflow running lint checkers, unit and functional tests
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches: [ master, main ]
