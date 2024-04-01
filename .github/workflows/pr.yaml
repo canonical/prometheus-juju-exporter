@@ -23,4 +23,4 @@ jobs:
       tox-version: "<4"
       snapcraft: true
       commands: "['make functional']"
-      juju-channel: "3.1/stable"
+      juju-channel: "3.2/stable"
