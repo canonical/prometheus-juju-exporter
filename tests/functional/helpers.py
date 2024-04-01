@@ -106,5 +106,5 @@ def add_machine():
 
 def remove_machine():
     """Remove a machine from the test model."""
-    assert check_call("juju remove-machine 0".split()) == 0  # noqa
+    assert check_call("juju remove-machine 0 --no-prompt".split()) == 0  # noqa
     juju_wait_until_complete()

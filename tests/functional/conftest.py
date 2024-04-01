@@ -128,4 +128,7 @@ def setup_test_model():
     yield test_model_name
 
     logging.info("Destroying model '%s'...", test_model_name)
-    check_call(f"juju destroy-model --destroy-storage --force -y {test_model_name}".split())
+
+    check_call(
+        f"juju destroy-model --destroy-storage  --force --no-prompt {test_model_name}".split()
+    )
