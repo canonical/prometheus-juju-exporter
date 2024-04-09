@@ -38,7 +38,4 @@ Due to the limitations of libjuju's cross-version support, channels and versions
 |-------------------------|-------------------------------------------|-------------|--------------|
 | 2.8 and older           | 2.8/stable<br/>2.8/candidate<br/>2.8/edge | 2.8         | 1.x          |
 | 2.9                     | 2.9/stable<br/>2.9/candidate<br/>2.9/edge | 2.9         | 2.x          |
-| 3.1                     | 3.1/stable<br/>3.1/candidate<br/>3.1/edge | 3.1         | 3.1          |
-| 3.2                     | 3.2/stable<br/>3.2/candidate<br/>3.2/edge | 3.2         | 3.2          |
-| 3.3                     | 3.3/stable<br/>3.3/candidate<br/>3.3/edge | 3.3         | 3.3          |
-| 3.4                     | 3.4/stable<br/>3.4/candidate<br/>3.4/edge | 3.4         | 3.4          |
+| 3.x                     | 3/stable<br/>3/candidate<br/>3/edge       | 3           | 3.x          |
