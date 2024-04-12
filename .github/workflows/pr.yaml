@@ -20,7 +20,6 @@ jobs:
     with:
       python-version-unit: "['3.8', '3.10']"
       python-version-func: "3.10"
-      tox-version: "<4"
+      juju-channel: "3.4/stable"
       snapcraft: true
       commands: "['make functional']"
-      juju-channel: "3.1/stable"
