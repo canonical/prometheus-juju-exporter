@@ -13,6 +13,10 @@ on:
       - '**.md'
       - '**.rst'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pr:
     uses: canonical/bootstack-actions/.github/workflows/pull-request.yaml@main
