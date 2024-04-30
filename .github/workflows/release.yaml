@@ -19,8 +19,4 @@ jobs:
       snapcraft: true
       commands: "['make functional']"
       juju-channel: "3.4/stable"
-      # "channel" should be one or a (comma-separated) list of <track>/<risk-level>
-      # Check if the current branch is the default ("main" or "master"). If true, track is set to "latest";
-      # otherwise, use the versioned branch name as the track name
-      # The risk level we want to release the snap to is "edge"
-      channel: ${{ contains(fromJSON('["main", "master"]'), github.ref_name) && 'latest' || github.ref_name }}/edge
+      channel: latest/edge,3/edge
