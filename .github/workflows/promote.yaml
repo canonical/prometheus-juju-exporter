@@ -21,7 +21,10 @@ jobs:
       - name: Snapcraft install
         run: sudo snap install --classic snapcraft
       - name: Snapcraft login
-        run: snapcraft login --with ${{ secrets.STORE_LOGIN }}
+        run: |
+          ${{ secrets.STORE_LOGIN }} > login.txt
+          snapcraft login --with login.txt
+          rm login.txt
       - name: Get snap name
         id: snap
         run: echo "name=$(yq '.name' snap/snapcraft.yaml)" >> $GITHUB_OUTPUT
