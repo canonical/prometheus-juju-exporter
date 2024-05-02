@@ -1,7 +1,6 @@
 name: prometheus-juju-exporter
 base: core22
 adopt-info: prometheus-juju-exporter
-# version: "0.1"
 summary: collects and exports juju machine status metrics
 description: |
   Collects juju machine status metrics periodically.
