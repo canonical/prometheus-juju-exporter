@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install yq
-        run: sudo apt update && sudo apt install yq -y
+        run: sudo snap install yq
       - name: Snapcraft install
         run: sudo snap install --classic snapcraft
       - name: Snapcraft login
