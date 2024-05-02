@@ -1,4 +1,4 @@
-name: Promote charm to other tracks and channels
+name: Promote snap to other tracks and channels
 
 on:
   workflow_dispatch:
@@ -17,9 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install yq
-        run: apt update && apt install yq -y
+        run: sudo apt update && sudo apt install yq -y
       - name: Snapcraft install
-        run: snap install --classic snapcraft
+        run: sudo snap install --classic snapcraft
       - name: Snapcraft login
         run: snapcraft login --with ${{ secrets.STORE_LOGIN }}
       - name: Get snap name
