@@ -20,18 +20,14 @@ jobs:
         run: sudo snap install yq
       - name: Snapcraft install
         run: sudo snap install --classic snapcraft
-      - name: Snapcraft login
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
-        run: snapcraft login
       - name: Get snap name
         id: snap
         run: echo "name=$(yq '.name' snap/snapcraft.yaml)" >> $GITHUB_OUTPUT
       - name: Snapcraft promote snap
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
         run: |
           snapcraft ${{ steps.snap.outputs.name }}  \
           --from-channel ${{ github.event.inputs.origin-channel }} \
           --to-channel ${{ github.event.inputs.destination-channel }} \
           --yes
-      - name: Snapcraft logout
-        run: snapcraft logout
