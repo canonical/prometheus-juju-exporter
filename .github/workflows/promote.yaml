@@ -1,4 +1,4 @@
-name: Promote charm to other tracks and channels
+name: Promote snap to other tracks and channels
 
 on:
   workflow_dispatch:
@@ -17,19 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install yq
-        run: apt update && apt install yq -y
+        run: sudo snap install yq
       - name: Snapcraft install
-        run: snap install --classic snapcraft
-      - name: Snapcraft login
-        run: snapcraft login --with ${{ secrets.STORE_LOGIN }}
+        run: sudo snap install --classic snapcraft
       - name: Get snap name
         id: snap
         run: echo "name=$(yq '.name' snap/snapcraft.yaml)" >> $GITHUB_OUTPUT
       - name: Snapcraft promote snap
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
+          SNAPCRAFT_HAS_TTY: "true" # this is necessary because snapcraft will not allow --yes for promotions of the edge channel https://github.com/canonical/snapcraft/issues/4439
         run: |
-          snapcraft ${{ steps.snap.outputs.name }}  \
+          # Note: using `yes |` instead of `--yes` because snapcraft will
+          #       refuse to non-interactively promote a snap from the edge
+          #       channel if it is done without any branch qualifiers
+          yes | snapcraft promote ${{ steps.snap.outputs.name }}  \
           --from-channel ${{ github.event.inputs.origin-channel }} \
-          --to-channel ${{ github.event.inputs.destination-channel }} \
-          --yes
-      - name: Snapcraft logout
-        run: snapcraft logout
+          --to-channel ${{ github.event.inputs.destination-channel }}
