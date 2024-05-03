@@ -27,7 +27,7 @@ jobs:
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
         run: |
-          snapcraft ${{ steps.snap.outputs.name }}  \
+          snapcraft promote ${{ steps.snap.outputs.name }}  \
           --from-channel ${{ github.event.inputs.origin-channel }} \
           --to-channel ${{ github.event.inputs.destination-channel }} \
           --yes
