@@ -29,5 +29,4 @@ jobs:
         run: |
           snapcraft promote ${{ steps.snap.outputs.name }}  \
           --from-channel ${{ github.event.inputs.origin-channel }} \
-          --to-channel ${{ github.event.inputs.destination-channel }} \
-          --yes
+          --to-channel ${{ github.event.inputs.destination-channel }}
