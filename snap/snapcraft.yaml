@@ -19,7 +19,7 @@ apps:
     command: bin/prometheus-juju-exporter
     plugs: [network, network-bind]
     environment:
-        PROMETHEUSJUJUEXPORTERDIR: $SNAP_DATA/
+      PROMETHEUSJUJUEXPORTERDIR: $SNAP_DATA/
 
 parts:
   prometheus-juju-exporter:
