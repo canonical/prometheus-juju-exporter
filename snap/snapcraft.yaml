@@ -3,8 +3,79 @@ base: core22
 adopt-info: prometheus-juju-exporter
 summary: collects and exports juju machine status metrics
 description: |
-  Collects juju machine status metrics periodically.
-  Provides a prometheus exporter interface exposing the collected metrics.
+  **Overview**
+
+  Prometheus Juju Exporter is a snap that collects statistics about machines deployed by a juju controller and exports them as Prometheus metrics.
+
+  The snap runs as a daemon service, crawling through every Juju model it finds and collecting information about deployed machines. Resulting metrics contain numeric representation `1` (UP) or `0` (DOWN) for each machine deployed by the controller. In addition, each machine (metric) has labels that help to uniquely identify it:
+
+  * hostname - hostname of the machine as reported by Juju
+  * juju_model - name of the model in which the machine is deployed
+  * cloud_name - name of the cloud that hosts the model
+  * customer - name of the customer/organization that owns the controller
+  * type - Distinguishes various host types
+  * metal - Physical machine
+  * kvm - Virtual Machine
+  * lxd - LXD container
+
+  **Compatibility matrix**
+
+  Due to the limitations of libjuju's [1] cross-version support, channels and versions are used in the snap to accommodate different juju controller versions. Generally speaking, install the snap channel that matches the version of the Juju controller.
+
+  For example, in a Juju cloud with a version 2.9 controller, users must install the snap from the `2.9/stable` channel:
+
+      sudo snap install --channel 2.9/stable prometheus-juju-exporter
+
+  A more exhaustive version mapping table is available in the project's README file [2].
+
+  **Configuration**
+
+  To configure the snap for your own environment, create a `config.yaml` file in the `$SNAP_DATA` (refer to Snap Environment Variables [3] linked below) directory.
+
+  Example configuration:
+
+      customer: # information about the targeted cloud
+        name: "example_customer"
+        cloud_name: "example_cloud"
+
+      juju: # these are usually found under ~/.local/share/juju
+
+        # The endpoint and CA certificate of the targeted controller
+        controller_endpoint: ""
+        controller_cacert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n"
+
+        # Credentials of a juju user. The minimum privileges of the user should be:
+        # `login` access to the controller and `admin` access to its model, as well as
+        # `admin` access to any other model monitored by this exporter
+        username: "example_user"
+        password: "example_password"
+
+      exporter:
+        port: 9748 # optional, defaults to 5000
+        collect_interval: 15
+
+      # parameters affecting the detection of machine types (physical or virtual)
+      detection:
+        # Interface names to consider when detecting machine type.
+        # Takes a single regex string as input. The default value '' is
+        # equivalent to '.*'.
+        match_interfaces: ''^(en[os]|eth)\d+|enp\d+s\d+|enx[0-9a-f]+”
+        # The list of MAC address prefixes to be considered as virtual machines.
+        virt_macs: ["52:54:00", "fa:16:3e", "06:f1:3a", "00:0d:3a", "00:50:56"]
+
+  The machine type detection algorithm will classify a machine as virtual if any MAC address included in the `virt_macs` prefix list matches the MAC address of any of the interfaces selected by the `match_interfaces` regex. If no such match is found, the machine is considered to be a physical machine.
+
+  **Viewing metrics**
+
+  The exported Prometheus metrics can be viewed directly by accessing the port specified in `config.yaml` of the machine on which the charm is deployed. For example, `curl http://192.168.5.10:5000`
+
+  With a successful Prometheus integration, the exported metrics will be scraped from the endpoint and displayed as time series data.
+
+  **Links**
+
+  * [1] https://github.com/juju/python-libjuju/
+  * [2] https://github.com/canonical/prometheus-juju-exporter?tab=readme-ov-file#juju-version-compatibility
+  * [3] https://snapcraft.io/docs/environment-variables
 architectures:
   - build-on: amd64
 
