@@ -1,3 +1,8 @@
+# This file is centrally managed as a template file in https://github.com/canonical/solutions-engineering-automation
+# To update the file:
+# - Edit it in the canonical/solutions-engineering-automation repository.
+# - Open a PR with the changes.
+# - When the PR merges, the soleng-terraform bot will open a PR to the target repositories with the changes.
 name: Publish snap
 
 on:
@@ -8,27 +13,35 @@ on:
 
 jobs:
   check:
-    uses: ./.github/workflows/pr.yaml
+    uses: ./.github/workflows/check.yaml
     secrets: inherit
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runs-on }}
     needs: check
-    outputs:
-      snap: ${{ steps.build.outputs.snap }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [[ubuntu-22.04]]
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed for version determination
-      - uses: snapcore/action-build@v1
-        id: build
-      - uses: actions/upload-artifact@v4
+          fetch-depth: 0  # Complete git history is required to generate the version from git tags.
+
+      - name: Determine system architecture
+        run: echo "SYSTEM_ARCH=$(uname -m)" >> $GITHUB_ENV
+
+      - name: Download the built snap from check workflow
+        uses: actions/download-artifact@v4
         with:
-          name: snap
-          path: ${{ steps.build.outputs.snap }}
+          name: snap_${{ env.SYSTEM_ARCH }}
+
+      - name: Find the downloaded snap file
+        run: echo "SNAP_FILE=$(find . -name "*.snap")" >> $GITHUB_ENV
+
       - uses: snapcore/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
         with:
-          snap: ${{ steps.build.outputs.snap }}
-          release: latest/edge,3/edge
+          snap: ${{ env.SNAP_FILE }}
+          release: latest/edge
