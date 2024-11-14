@@ -44,4 +44,4 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
         with:
           snap: ${{ env.SNAP_FILE }}
-          release: latest/edge
+          release: latest/edge,3/edge
