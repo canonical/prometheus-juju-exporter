@@ -1,3 +1,8 @@
+# This file is centrally managed as a template file in https://github.com/canonical/solutions-engineering-automation
+# To update the file:
+# - Edit it in the canonical/solutions-engineering-automation repository.
+# - Open a PR with the changes.
+# - When the PR merges, the soleng-terraform bot will open a PR to the target repositories with the changes.
 name: Tests
 
 on:
@@ -42,31 +47,6 @@ jobs:
       - name: Lint yaml files
         run: |
           yamllint .yamllint snap/snapcraft.yaml
-
-  unit:
-    name: Unit
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.8", "3.10"]
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install 'tox<5'
-
-    - name: Run unit tests
-      run: tox -e unit
 
   build:
     needs:
@@ -124,13 +104,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install 'tox<5'
-
-      - name: Setup Juju environment
-        uses: charmed-kubernetes/actions-operator@main
-        with:
-          provider: "lxd"
-          juju-channel: "3.5/stable"
-          charmcraft-channel: "3.x/stable"
 
       - name: Run func tests
         run: |
