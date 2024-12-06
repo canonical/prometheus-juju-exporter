@@ -45,4 +45,4 @@ jobs:
         with:
           snap: ${{ env.SNAP_FILE }}
           # Comma-separated list of channels to release the snap to.
-          release: latest/edge
+          release: latest/edge,3/edge
