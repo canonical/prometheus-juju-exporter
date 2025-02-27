@@ -3,6 +3,9 @@
 
 # Prometheus Juju Exporter
 
+> [!NOTE]
+> This charm is under maintenance mode. Only critical bug will be handled.
+
 prometheus-juju-exporter snap collects machines' running status in all models under a Juju controller. It also provides an interface to expose the metrics to Prometheus for storage and further usage.
 
 ## Deployment
