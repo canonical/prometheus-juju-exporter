@@ -3,8 +3,9 @@
 
 # Prometheus Juju Exporter
 
-> [!NOTE]
-> This charm is under maintenance mode. Only critical bug will be handled.
+> [!CAUTION]
+> This is a deprecated charm. Please use the new charm [script-exporter](https://charmhub.io/script-exporter) instead. See the [Migration Guide](https://charmhub.io/prometheus-juju-exporter/docs/h-migration) for more details on how to migrate to the new solution.
+> 
 
 prometheus-juju-exporter snap collects machines' running status in all models under a Juju controller. It also provides an interface to expose the metrics to Prometheus for storage and further usage.
 
